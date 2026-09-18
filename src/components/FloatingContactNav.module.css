@@ -1,0 +1,233 @@
+/* Floating Glass Contact Interface — Scene 04 */
+
+:root {
+  --glass-bg: rgba(255, 255, 255, 0.62);
+  --glass-bg-hover: rgba(255, 255, 255, 0.84);
+  --glass-border: rgba(0, 0, 0, 0.08);
+  --glass-border-hover: rgba(0, 0, 0, 0.14);
+  --glass-shadow: 0 10px 32px -4px rgba(0, 0, 0, 0.06), 0 2px 8px rgba(0, 0, 0, 0.02), inset 0 1px 1px rgba(255, 255, 255, 0.95);
+  --glass-shadow-hover: 0 14px 40px -4px rgba(0, 0, 0, 0.09), 0 4px 12px rgba(0, 0, 0, 0.03), inset 0 1px 1.5px rgba(255, 255, 255, 1);
+  --glass-blur: 18px;
+  --glass-text: #000000;
+  --btn-size-desktop: 50px;
+  --btn-size-mobile: 44px;
+}
+
+/* Persistent Fixed Container */
+.navContainer {
+  position: fixed;
+  z-index: 100;
+  pointer-events: auto;
+  user-select: none;
+  display: flex;
+}
+
+/* Desktop: Right-center vertical column */
+@media (min-width: 769px) {
+  .navContainer {
+    right: clamp(28px, 2.5vw, 44px);
+    top: 50%;
+    transform: translateY(-50%);
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 12px;
+  }
+}
+
+/* Mobile: Bottom-floating horizontal row */
+@media (max-width: 768px) {
+  .navContainer {
+    left: 50%;
+    bottom: max(24px, env(safe-area-inset-bottom, 24px));
+    transform: translateX(-50%);
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: auto;
+    max-width: calc(100vw - 32px);
+  }
+}
+
+/* Circular Glass Control Base */
+.glassButton {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  text-decoration: none;
+  color: var(--glass-text);
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  border-radius: 9999px;
+  box-sizing: border-box;
+  padding: 0;
+  cursor: pointer;
+  overflow: hidden;
+  font-family: var(--font-editorial);
+  transform: translateZ(0);
+  will-change: width, background-color, border-color, box-shadow;
+  transition: 
+    width 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+    background-color 0.32s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.32s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Native Button Reset */
+button.glassButton {
+  border: 1px solid var(--glass-border);
+  font-size: inherit;
+  line-height: 1;
+}
+
+/* Desktop Dimensions */
+@media (min-width: 769px) {
+  .glassButton {
+    height: var(--btn-size-desktop);
+    min-width: var(--btn-size-desktop);
+  }
+}
+
+/* Mobile Dimensions */
+@media (max-width: 768px) {
+  .glassButton {
+    height: var(--btn-size-mobile) !important;
+    width: var(--btn-size-mobile) !important;
+    min-width: var(--btn-size-mobile) !important;
+    justify-content: center;
+  }
+}
+
+/* Keyboard Focus Treatment */
+.glassButton:focus-visible {
+  outline: 2px solid rgba(0, 0, 0, 0.4);
+  outline-offset: 3px;
+}
+
+/* Content wrapper inside button */
+.contentInner {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* Icon Container: Always circular optical center */
+.iconBox {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #000000;
+  flex-shrink: 0;
+}
+
+@media (min-width: 769px) {
+  .iconBox {
+    width: var(--btn-size-desktop);
+    height: var(--btn-size-desktop);
+  }
+}
+
+@media (max-width: 768px) {
+  .iconBox {
+    width: var(--btn-size-mobile);
+    height: var(--btn-size-mobile);
+  }
+}
+
+/* SVG outline icon formatting */
+.iconBox svg {
+  width: 19px;
+  height: 19px;
+  display: block;
+}
+
+@media (max-width: 768px) {
+  .iconBox svg {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+/* Expandable Text Label */
+.label {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #000000;
+  letter-spacing: -0.012em;
+  padding-right: 18px;
+  padding-left: 2px;
+  display: inline-block;
+  opacity: 0;
+  white-space: nowrap;
+  pointer-events: none;
+  transition: opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (max-width: 768px) {
+  .label {
+    display: none;
+  }
+}
+
+/* Desktop Hovered / Expanded State */
+@media (min-width: 769px) {
+  .glassButton:hover,
+  .glassButton:focus-visible {
+    background: var(--glass-bg-hover);
+    border-color: var(--glass-border-hover);
+    box-shadow: var(--glass-shadow-hover);
+  }
+
+  .expanded .label {
+    opacity: 1;
+    transition: opacity 0.28s cubic-bezier(0.16, 1, 0.3, 1) 0.05s;
+  }
+}
+
+/* Toast message for contact button action */
+.toast {
+  position: fixed;
+  z-index: 110;
+  pointer-events: none;
+  background: rgba(0, 0, 0, 0.88);
+  color: #ffffff;
+  font-family: var(--font-editorial);
+  font-size: 13px;
+  font-weight: 450;
+  padding: 8px 16px;
+  border-radius: 9999px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  letter-spacing: -0.01em;
+}
+
+@media (min-width: 769px) {
+  .toast {
+    right: clamp(88px, 7vw, 120px);
+    top: 50%;
+    transform: translateY(-50%);
+  }
+}
+
+@media (max-width: 768px) {
+  .toast {
+    bottom: 84px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+}
+
+/* Reduced Motion Fallback */
+@media (prefers-reduced-motion: reduce) {
+  .glassButton {
+    transition: none !important;
+  }
+  .label {
+    transition: none !important;
+  }
+}

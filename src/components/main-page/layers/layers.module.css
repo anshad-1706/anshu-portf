@@ -1,0 +1,114 @@
+/* Shared layer and spatial anchor styling for MainPage Foundation */
+
+.layerBase {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  /* Crucial: No overflow: hidden here so future radial constellations are never clipped */
+  overflow: visible;
+}
+
+/* 1. Background Layer */
+.backgroundLayer {
+  z-index: var(--z-bg, 1);
+  background-color: transparent;
+}
+
+/* 2. Ambient Layer */
+.ambientLayer {
+  z-index: var(--z-ambient, 2);
+}
+
+/* 3. Hero Layer */
+.heroLayer {
+  z-index: var(--z-hero, 10);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.heroAnchor {
+  position: relative;
+  pointer-events: auto;
+}
+
+/* 4. Navigation Layer */
+.navigationLayer {
+  z-index: var(--z-navigation, 40);
+}
+
+/* Top-Left Brand Anchor */
+.brandAnchor {
+  position: absolute;
+  top: clamp(24px, 3vh, 48px);
+  left: clamp(24px, 3vw, 48px);
+  pointer-events: auto;
+}
+
+/* Top-Center Navigation Anchor (Strictly top-center on desktop) */
+.navAnchor {
+  position: absolute;
+  top: clamp(24px, 3vh, 48px);
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: auto;
+}
+
+/* 5. Social Layer — Future spatial region anchor only */
+.socialLayer {
+  z-index: var(--z-social, 20);
+}
+
+.socialAnchor {
+  position: absolute;
+  bottom: clamp(24px, 3vh, 48px);
+  left: clamp(24px, 3vw, 48px);
+  pointer-events: auto;
+}
+
+/* 6. Project Layer — Future project file & constellation hub anchor */
+.projectLayer {
+  z-index: var(--z-project, 30);
+  overflow: visible;
+}
+
+.projectAnchor {
+  position: absolute;
+  bottom: clamp(24px, 3vh, 48px);
+  right: clamp(24px, 3vw, 48px);
+  pointer-events: auto;
+  overflow: visible;
+}
+
+/* 7. Cursor Layer */
+.cursorLayer {
+  z-index: var(--z-cursor, 100);
+  pointer-events: none;
+}
+
+/* Responsive adjustments for mobile viewports */
+@media (max-width: 768px) {
+  .brandAnchor {
+    top: max(16px, env(safe-area-inset-top, 16px));
+    left: 16px;
+  }
+
+  .navAnchor {
+    top: max(16px, env(safe-area-inset-top, 16px));
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .socialAnchor {
+    bottom: max(16px, env(safe-area-inset-bottom, 16px));
+    left: 16px;
+  }
+
+  .projectAnchor {
+    bottom: max(16px, env(safe-area-inset-bottom, 16px));
+    right: 16px;
+  }
+}

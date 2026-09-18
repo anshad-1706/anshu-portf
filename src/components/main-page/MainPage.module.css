@@ -1,0 +1,24 @@
+/* MainPage Container & Scoped Layer Stacking Architecture */
+
+.mainPageContainer {
+  /* Scoped semantic z-index scale for MainPage layers */
+  --z-bg: 1;
+  --z-ambient: 2;
+  --z-hero: 10;
+  --z-social: 20;
+  --z-project: 30;
+  --z-navigation: 40;
+  --z-cursor: 100;
+
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background-color: var(--bg-canvas, #ffffff);
+
+  /* Crucial: No overflow: hidden here so radial project cards can expand without clipping */
+  overflow: visible;
+
+  /* Stage container itself is non-blocking; child anchors enable pointer events explicitly */
+  pointer-events: none;
+}

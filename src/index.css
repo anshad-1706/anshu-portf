@@ -1,0 +1,64 @@
+@font-face {
+  font-family: "Akira Expanded";
+  src: url("./Akira Expanded Demo.otf") format("opentype"),
+       url("/fonts/Akira-Expanded-Demo.otf") format("opentype");
+  font-weight: 700 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  /* Hero display typography - Akira Expanded */
+  --font-hero: "Akira Expanded", -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+  
+  /* Editorial body typography - clean, sophisticated grotesk */
+  --font-editorial: "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro", "Segoe UI", Roboto, sans-serif;
+  
+  /* Color palette - strict editorial monochrome */
+  --bg-canvas: #ffffff;
+  --color-primary: #000000;
+
+  /* Akira Expanded recalibrated metrics: wide display glyphs */
+  --hero-font-size: clamp(2.1rem, 7.6vw, 8.25rem);
+  --hero-letter-spacing: clamp(0.12em, 1.4vw, 0.28em);
+  --hero-font-weight: 800;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  background-color: var(--bg-canvas);
+  color: var(--color-primary);
+  font-family: var(--font-hero);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg-canvas);
+  color: var(--color-primary);
+  min-height: 100vh;
+  scroll-behavior: auto;
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+  background-color: var(--bg-canvas);
+  position: relative;
+}
+
+/* Subtle scrollbar */
+::-webkit-scrollbar {
+  width: 0px;
+  background: transparent;
+}

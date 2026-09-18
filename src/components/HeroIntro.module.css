@@ -1,0 +1,179 @@
+/* Hero Section: 520vh scroll track providing generous stillness pause and gentle exit into Scene 04 */
+.heroTrack {
+  position: relative;
+  width: 100%;
+  height: 520vh;
+  background-color: var(--bg-canvas, #ffffff);
+}
+
+/* Sticky viewport pinned to top while user scrolls through the 480vh track */
+.stickyViewport {
+  position: sticky;
+  top: 0;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--bg-canvas, #ffffff);
+  overflow: hidden;
+  user-select: none;
+}
+
+/* Layer 0: Extremely subtle pale-blue corner atmosphere */
+.cornerAtmosphere {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    radial-gradient(ellipse 65vw 55vh at 0% 0%, rgba(220, 238, 255, 1) 0%, rgba(220, 238, 255, 0.4) 35%, rgba(255, 255, 255, 0) 70%),
+    radial-gradient(ellipse 65vw 55vh at 100% 0%, rgba(220, 238, 255, 1) 0%, rgba(220, 238, 255, 0.4) 35%, rgba(255, 255, 255, 0) 70%),
+    radial-gradient(ellipse 65vw 55vh at 0% 100%, rgba(220, 238, 255, 1) 0%, rgba(220, 238, 255, 0.35) 35%, rgba(255, 255, 255, 0) 70%),
+    radial-gradient(ellipse 65vw 55vh at 100% 100%, rgba(220, 238, 255, 1) 0%, rgba(220, 238, 255, 0.35) 35%, rgba(255, 255, 255, 0) 70%);
+  opacity: 0.085;
+}
+
+/* Layer 1: Blurred ANSHAD atmospheric shadow */
+.shadowLayer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+  pointer-events: none;
+  overflow: visible;
+  transform: translateZ(0);
+}
+
+/* Main hero typography identity */
+.nameHeading {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0 1.25rem;
+  font-family: var(--font-hero);
+  font-size: var(--hero-font-size);
+  font-weight: var(--hero-font-weight);
+  color: var(--color-primary, #000000);
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* Individual letter span of ANSHAD */
+.letter {
+  display: inline-block;
+  margin-right: var(--hero-letter-spacing);
+  will-change: transform, opacity, filter;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Optical centering: eliminate trailing spacing on last letter */
+.letter:last-child {
+  margin-right: 0;
+}
+
+/* Layer 2: Statement Layer holding centered identity thoughts */
+.statementLayer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  transform: translateZ(10px);
+  pointer-events: none;
+  padding: 0 1.75rem;
+}
+
+/* Editorial paragraph base */
+.paragraphBase {
+  font-family: var(--font-editorial);
+  color: #000000;
+  text-align: center;
+  margin: 0 auto;
+}
+
+/* Paragraph 01 & Paragraph 02 styling */
+.paragraph01,
+.paragraph02 {
+  max-width: 680px;
+  font-size: clamp(1.2rem, 2.3vw, 1.85rem);
+  font-weight: 500;
+  line-height: 1.5;
+  letter-spacing: -0.015em;
+}
+
+/* Paragraph 03 — Visual Climax: ~1.15x larger, stronger weight, commanding presence */
+.paragraph03 {
+  max-width: 740px;
+  font-size: clamp(1.4rem, 2.75vw, 2.2rem);
+  font-weight: 580;
+  line-height: 1.4;
+  letter-spacing: -0.022em;
+}
+
+/* Word wrapper to preserve cohesive wrapping across viewports */
+.word {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+/* Individual animated character */
+.char {
+  display: inline-block;
+  will-change: transform, opacity, filter;
+  transform: translateZ(0);
+}
+
+@media (max-width: 768px) {
+  .cornerAtmosphere {
+    opacity: 0.055;
+    background-image:
+      radial-gradient(ellipse 75vw 40vh at 0% 0%, rgba(220, 238, 255, 1) 0%, rgba(220, 238, 255, 0.3) 30%, rgba(255, 255, 255, 0) 65%),
+      radial-gradient(ellipse 75vw 40vh at 100% 0%, rgba(220, 238, 255, 1) 0%, rgba(220, 238, 255, 0.3) 30%, rgba(255, 255, 255, 0) 65%),
+      radial-gradient(ellipse 75vw 40vh at 0% 100%, rgba(220, 238, 255, 1) 0%, rgba(220, 238, 255, 0.25) 30%, rgba(255, 255, 255, 0) 65%),
+      radial-gradient(ellipse 75vw 40vh at 100% 100%, rgba(220, 238, 255, 1) 0%, rgba(220, 238, 255, 0.25) 30%, rgba(255, 255, 255, 0) 65%);
+  }
+
+  .nameHeading {
+    padding: 0 0.5rem;
+  }
+
+  .paragraph01,
+  .paragraph02 {
+    max-width: 90vw;
+    font-size: clamp(1.1rem, 4.4vw, 1.4rem);
+    line-height: 1.45;
+  }
+
+  .paragraph03 {
+    max-width: 92vw;
+    font-size: clamp(1.28rem, 5.2vw, 1.68rem);
+    line-height: 1.38;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .letter,
+  .char,
+  .shadowLayer {
+    transition: none !important;
+    animation: none !important;
+  }
+}
