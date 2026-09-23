@@ -1,0 +1,121 @@
+/* AboutSection — Phase 06 Editorial About Me Layer */
+
+.aboutContainer {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: text;
+  pointer-events: none;
+  font-family: var(--font-editorial, "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  padding: 0 clamp(24px, 5vw, 64px);
+  box-sizing: border-box;
+}
+
+.aboutWrapper {
+  position: relative;
+  max-width: 660px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  will-change: opacity, transform, filter;
+  transition: opacity 120ms linear, filter 120ms linear, transform 120ms linear;
+}
+
+.eyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(0, 0, 0, 0.42);
+  margin-bottom: 14px;
+}
+
+.heading {
+  font-size: clamp(24px, 3.4vw, 36px);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+  color: #000000;
+  margin: 0 0 20px 0;
+}
+
+.body {
+  font-size: clamp(14px, 1.35vw, 16px);
+  line-height: 1.65;
+  color: rgba(0, 0, 0, 0.65);
+  margin-bottom: 28px;
+}
+
+.body p {
+  margin: 0 0 14px 0;
+}
+
+.body p:last-child {
+  margin-bottom: 0;
+}
+
+.metaRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 32px;
+  width: 100%;
+  padding-top: 20px;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.metaItem {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.metaLabel {
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(0, 0, 0, 0.40);
+}
+
+.metaValue {
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.85);
+  letter-spacing: -0.01em;
+}
+
+/* Tablet adjustments */
+@media (max-width: 1024px) {
+  .aboutWrapper {
+    max-width: 580px;
+  }
+  .heading {
+    font-size: clamp(22px, 3.2vw, 30px);
+  }
+  .metaRow {
+    gap: 24px;
+  }
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  .aboutWrapper {
+    max-width: 100%;
+  }
+  .heading {
+    font-size: 23px;
+    margin-bottom: 16px;
+  }
+  .body {
+    font-size: 14px;
+    margin-bottom: 22px;
+  }
+  .metaRow {
+    gap: 18px;
+    flex-direction: column;
+  }
+}

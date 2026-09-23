@@ -126,11 +126,16 @@ const AnimatedChar: React.FC<AnimatedCharProps> = ({
 
 interface HeroIntroProps {
   onScene04Change?: (active: boolean) => void;
+  isLocked?: boolean;
 }
 
-export const HeroIntro: React.FC<HeroIntroProps> = ({ onScene04Change }) => {
+export const HeroIntro: React.FC<HeroIntroProps> = ({
+  onScene04Change,
+  isLocked = false,
+}) => {
   const containerRef = useRef<HTMLElement>(null);
   const [isEntranceComplete, setIsEntranceComplete] = useState(false);
+  const [hasCompleted, setHasCompleted] = useState(false);
   const shouldReduceMotion = useReducedMotion() ?? false;
 
   // Guarantee page starts at top and locks scroll during the 2.7s entrance reveal
@@ -163,20 +168,20 @@ export const HeroIntro: React.FC<HeroIntroProps> = ({ onScene04Change }) => {
   });
 
   // Scene 04 trigger: once Paragraph 03 has completely transitioned away (>= 0.98)
-  // Reversible if user scrolls back up into P3 (< 0.92)
+  // STRICT REQUIREMENT: One-way trigger. Never reversible once completed.
   useEffect(() => {
     const handleProgress = (latest: number) => {
+      if (hasCompleted || isLocked) return;
       if (latest >= 0.98) {
+        setHasCompleted(true);
         onScene04Change?.(true);
-      } else if (latest < 0.92) {
-        onScene04Change?.(false);
       }
     };
 
     handleProgress(scrollYProgress.get());
     const unsubscribe = scrollYProgress.on("change", handleProgress);
     return () => unsubscribe();
-  }, [scrollYProgress, onScene04Change]);
+  }, [scrollYProgress, onScene04Change, hasCompleted, isLocked]);
 
   // ==========================================
   // Layer 1: Atmospheric Typographic Shadow of ANSHAD
@@ -302,6 +307,24 @@ export const HeroIntro: React.FC<HeroIntroProps> = ({ onScene04Change }) => {
     [0, shouldReduceMotion ? 0 : -18]
   );
 
+  const isIntroFinished = hasCompleted || isLocked;
+  const effectiveShadowOpacity = useTransform(
+    shadowOpacity,
+    (v) => (isIntroFinished ? 0 : v)
+  );
+  const effectiveP1Opacity = useTransform(
+    p1ExitOpacity,
+    (v) => (isIntroFinished ? 0 : v)
+  );
+  const effectiveP2Opacity = useTransform(
+    p2ExitOpacity,
+    (v) => (isIntroFinished ? 0 : v)
+  );
+  const effectiveP3Opacity = useTransform(
+    p3ExitOpacity,
+    (v) => (isIntroFinished ? 0 : v)
+  );
+
   const handleLastLetterComplete = () => {
     setIsEntranceComplete(true);
   };
@@ -323,7 +346,7 @@ export const HeroIntro: React.FC<HeroIntroProps> = ({ onScene04Change }) => {
             x: shadowX,
             scale: shadowScale,
             filter: shadowFilter,
-            opacity: shadowOpacity,
+            opacity: effectiveShadowOpacity,
           }}
         >
           <motion.h1
@@ -355,7 +378,7 @@ export const HeroIntro: React.FC<HeroIntroProps> = ({ onScene04Change }) => {
         <motion.div
           className={styles.statementLayer}
           style={{
-            opacity: p1ExitOpacity,
+            opacity: effectiveP1Opacity,
             filter: p1ExitFilter,
             y: p1ExitY,
           }}
@@ -389,7 +412,7 @@ export const HeroIntro: React.FC<HeroIntroProps> = ({ onScene04Change }) => {
         <motion.div
           className={styles.statementLayer}
           style={{
-            opacity: p2ExitOpacity,
+            opacity: effectiveP2Opacity,
             filter: p2ExitFilter,
             y: p2ExitY,
           }}
@@ -424,7 +447,7 @@ export const HeroIntro: React.FC<HeroIntroProps> = ({ onScene04Change }) => {
           className={styles.statementLayer}
           style={{
             scale: p3Scale,
-            opacity: p3ExitOpacity,
+            opacity: effectiveP3Opacity,
             filter: p3ExitFilter,
             y: p3ExitY,
           }}

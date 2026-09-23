@@ -1,12 +1,15 @@
 import React from "react";
 import styles from "./layers.module.css";
+import { SocialControls } from "../social";
 
-interface SocialLayerProps {
+export interface SocialLayerProps {
   children?: React.ReactNode;
 }
 
 /**
- * SocialLayer — Future main-page spatial region anchor only.
+ * SocialLayer — Phase 04
+ * Secondary personal identity/control layer of the Main Page.
+ * Owns SocialControls in the bottom-left spatial region (z-index: 20).
  * Does not modify, relocate, replace, or duplicate the locked Scene 04 FloatingContactNav.
  */
 export const SocialLayer: React.FC<SocialLayerProps> = ({ children }) => {
@@ -16,7 +19,7 @@ export const SocialLayer: React.FC<SocialLayerProps> = ({ children }) => {
       data-layer="social"
     >
       <div className={styles.socialAnchor} data-anchor="social">
-        {children}
+        {children || <SocialControls />}
       </div>
     </div>
   );

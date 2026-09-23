@@ -1,33 +1,97 @@
-/* Floating Dark Graphite Liquid-Glass Navigation — Phase 02 */
+/* Floating Liquid / Neumorphic Active Navigation — V2 */
 
+:root {
+  --nav-bg: rgba(240, 240, 243, 0.94);
+  --nav-border: #c8c8c8;
+  --nav-text-primary: #666666;
+  --nav-text-hover: #222222;
+  --nav-text-active: #222222;
+  --liquid-indicator-bg: linear-gradient(145deg, #e8e8e8, #ffffff);
+  --liquid-indicator-border: #c8c8c8;
+}
+
+/* 1. Organic Liquid Blob Animation */
+@keyframes liquid-nav-blob {
+  0%, 100% {
+    border-radius: 50% 50% 50% 50% / 50% 50% 50% 50%;
+  }
+  20% {
+    border-radius: 60% 40% 55% 45% / 45% 55% 40% 60%;
+  }
+  40% {
+    border-radius: 45% 55% 40% 60% / 60% 40% 55% 45%;
+  }
+  60% {
+    border-radius: 55% 45% 60% 40% / 40% 60% 45% 55%;
+  }
+  80% {
+    border-radius: 40% 60% 45% 55% / 55% 45% 60% 40%;
+  }
+}
+
+/* 2. Liquid Shadow Breathing Animation */
+@keyframes liquid-nav-shadow {
+  0%, 100% {
+    box-shadow: 
+      2px 3px 8px rgba(166, 171, 189, 0.35),
+      -2px -2px 6px rgba(255, 255, 255, 0.9),
+      inset 1px 1px 1px rgba(255, 255, 255, 0.9);
+  }
+  50% {
+    box-shadow: 
+      3px 4px 12px rgba(166, 171, 189, 0.48),
+      -3px -3px 10px rgba(255, 255, 255, 1),
+      inset 1px 1px 1.5px rgba(255, 255, 255, 1);
+  }
+}
+
+/* Outer Navbar Capsule */
 .navContainer {
   position: relative;
   display: inline-flex;
   align-items: center;
   border-radius: 9999px;
-  background: rgba(18, 18, 22, 0.72);
-  backdrop-filter: blur(18px) saturate(170%);
-  -webkit-backdrop-filter: blur(18px) saturate(170%);
-  border: 1px solid rgba(255, 255, 255, 0.09);
+  isolation: isolate;
+  background: var(--nav-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--nav-border);
   box-shadow: 
-    0 12px 32px -4px rgba(0, 0, 0, 0.24), 
-    0 2px 8px rgba(0, 0, 0, 0.12), 
-    inset 0 1px 1px rgba(255, 255, 255, 0.16);
+    0 8px 24px -4px rgba(0, 0, 0, 0.08),
+    0 2px 6px rgba(0, 0, 0, 0.03),
+    inset 0 1px 1px rgba(255, 255, 255, 0.95);
   padding: 4px;
-  gap: 2px;
+  gap: 4px;
   user-select: none;
   pointer-events: auto;
   transform: translateZ(0);
   box-sizing: border-box;
 }
 
+/* Subtle Inner Ambient Depth */
+.glassInnerSurface {
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.4) 0%,
+    transparent 60%,
+    rgba(0, 0, 0, 0.02) 100%
+  );
+  z-index: 0;
+}
+
 .navList {
+  position: relative;
   list-style: none;
   margin: 0;
   padding: 0;
   display: inline-flex;
   align-items: center;
-  gap: 2px;
+  gap: 4px;
+  z-index: 1;
 }
 
 .navItem {
@@ -37,79 +101,97 @@
   padding: 0;
 }
 
+/* Navigation Link */
 .navLink {
   position: relative;
+  isolation: isolate;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 6px 14px;
+  min-height: 34px;
+  padding: 6px 16px;
   border-radius: 9999px;
-  font-family: var(--font-editorial);
+  font-family: var(--font-editorial, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
   font-size: 13px;
-  font-weight: 450;
-  letter-spacing: -0.012em;
-  color: rgba(255, 255, 255, 0.62);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--nav-text-primary);
   text-decoration: none;
   cursor: pointer;
   background: transparent;
   border: none;
   line-height: 1.2;
-  transition: color 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: color 0.25s ease;
   -webkit-tap-highlight-color: transparent;
 }
 
 .navLink:hover {
-  color: rgba(255, 255, 255, 0.92);
+  color: var(--nav-text-hover);
 }
 
 .navLink.active {
-  color: #ffffff;
-  font-weight: 500;
+  color: var(--nav-text-active);
+  font-weight: 600;
 }
 
 .navLink:focus-visible {
-  outline: 2px solid rgba(255, 255, 255, 0.45);
+  outline: 2px solid rgba(0, 0, 0, 0.4);
   outline-offset: 2px;
 }
 
-/* Label text sits securely above the active pill highlight */
+/* Stationary label text sits cleanly above the moving active surface */
 .navLabel {
   position: relative;
-  z-index: 2;
+  z-index: 3;
   white-space: nowrap;
 }
 
-/* Subtle active pill highlight: micro-state within the dark capsule */
-.activePill {
+/* Single Continuous Shared Moving Liquid Active Indicator (layoutId) */
+.activeGlass {
   position: absolute;
   inset: 0;
   border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.08);
-  z-index: 1;
+  z-index: 2;
   pointer-events: none;
+}
+
+/* Liquid / Neumorphic Active Surface (morphing border-radius + breathing shadow) */
+.activeGlassMeniscus {
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: var(--liquid-indicator-bg);
+  border: 1px solid var(--liquid-indicator-border);
+  box-shadow: 
+    2px 3px 8px rgba(166, 171, 189, 0.35),
+    -2px -2px 6px rgba(255, 255, 255, 0.9),
+    inset 1px 1px 1px rgba(255, 255, 255, 0.9);
+  pointer-events: none;
+  animation: 
+    liquid-nav-blob 3.5s ease-in-out infinite,
+    liquid-nav-shadow 3.5s ease-in-out infinite;
 }
 
 /* Mobile & Tablet Compact Styling */
 @media (max-width: 768px) {
   .navContainer {
     padding: 3px;
-    gap: 1px;
+    gap: 2px;
     max-width: calc(100vw - 32px);
   }
 
   .navLink {
-    padding: 6px 11px;
+    min-height: 32px;
+    padding: 5px 12px;
     font-size: 12px;
   }
 
-  /* Accessible hit area expansion for touch targets */
-  .navLink::before {
+  /* Accessible hit area expansion for touch targets (44px min height) */
+  .navLink::after {
     content: "";
     position: absolute;
-    top: -6px;
-    bottom: -6px;
+    top: -8px;
+    bottom: -8px;
     left: -4px;
     right: -4px;
   }
@@ -119,8 +201,12 @@
 @media (prefers-reduced-motion: reduce) {
   .navContainer,
   .navLink,
-  .activePill {
+  .activeGlass,
+  .activeGlassMeniscus {
     transition: none !important;
     animation: none !important;
   }
 }
+
+
+

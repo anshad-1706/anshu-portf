@@ -28,11 +28,26 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  height: 100vh;
+  height: 100dvh;
 }
 
 .heroAnchor {
   position: relative;
   pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.aboutPortraitWrapper {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
 }
 
 /* 4. Navigation Layer */
@@ -48,18 +63,21 @@
   pointer-events: auto;
 }
 
-/* Top-Center Navigation Anchor (Strictly top-center on desktop) */
+/* Top-Center Navigation Anchor (Strictly fixed top-center) */
 .navAnchor {
-  position: absolute;
+  position: fixed;
   top: clamp(24px, 3vh, 48px);
   left: 50%;
   transform: translateX(-50%);
+  z-index: var(--z-navigation, 90);
   pointer-events: auto;
 }
 
-/* 5. Social Layer — Future spatial region anchor only */
+/* 5. Social Layer — Phase 04 Personal / Social Identity */
 .socialLayer {
   z-index: var(--z-social, 20);
+  height: 100vh;
+  height: 100dvh;
 }
 
 .socialAnchor {
@@ -69,21 +87,56 @@
   pointer-events: auto;
 }
 
-/* 6. Project Layer — Future project file & constellation hub anchor */
+/* 6. Focus Blur Layer — Phase 06.1 Progressive background/UI blur behind ProjectFileHub */
+.focusBlurLayer {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  pointer-events: none;
+  z-index: 45;
+  backdrop-filter: blur(0px);
+  -webkit-backdrop-filter: blur(0px);
+  background-color: rgba(255, 255, 255, 0);
+  opacity: 0;
+  transition:
+    backdrop-filter 520ms cubic-bezier(0.16, 1, 0.3, 1),
+    -webkit-backdrop-filter 520ms cubic-bezier(0.16, 1, 0.3, 1),
+    background-color 520ms cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 520ms cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: backdrop-filter, opacity;
+}
+
+.focusBlurActive {
+  opacity: 1;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  background-color: rgba(255, 255, 255, 0.04);
+}
+
+/* 7. Project Layer — Phase 06.1 Optical Center Project File Hub */
 .projectLayer {
-  z-index: var(--z-project, 30);
+  z-index: var(--z-project, 60);
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
   overflow: visible;
 }
 
 .projectAnchor {
-  position: absolute;
-  bottom: clamp(24px, 3vh, 48px);
-  right: clamp(24px, 3vw, 48px);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   pointer-events: auto;
   overflow: visible;
 }
 
-/* 7. Cursor Layer */
+/* 8. Cursor Layer */
 .cursorLayer {
   z-index: var(--z-cursor, 100);
   pointer-events: none;
@@ -103,12 +156,18 @@
   }
 
   .socialAnchor {
-    bottom: max(16px, env(safe-area-inset-bottom, 16px));
-    left: 16px;
+    bottom: calc(max(24px, env(safe-area-inset-bottom, 24px)) + 58px);
+    left: max(16px, env(safe-area-inset-left, 16px));
   }
 
   .projectAnchor {
-    bottom: max(16px, env(safe-area-inset-bottom, 16px));
-    right: 16px;
+    bottom: auto;
+    right: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .focusBlurLayer {
+    transition-duration: 0ms !important;
   }
 }

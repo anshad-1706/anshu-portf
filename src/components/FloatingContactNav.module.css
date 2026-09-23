@@ -1,16 +1,93 @@
-/* Floating Glass Contact Interface — Scene 04 */
+/* Floating Contact Navigation V2 — Liquid / Neumorphic Style (Black Theme) */
 
 :root {
-  --glass-bg: rgba(255, 255, 255, 0.62);
-  --glass-bg-hover: rgba(255, 255, 255, 0.84);
-  --glass-border: rgba(0, 0, 0, 0.08);
-  --glass-border-hover: rgba(0, 0, 0, 0.14);
-  --glass-shadow: 0 10px 32px -4px rgba(0, 0, 0, 0.06), 0 2px 8px rgba(0, 0, 0, 0.02), inset 0 1px 1px rgba(255, 255, 255, 0.95);
-  --glass-shadow-hover: 0 14px 40px -4px rgba(0, 0, 0, 0.09), 0 4px 12px rgba(0, 0, 0, 0.03), inset 0 1px 1.5px rgba(255, 255, 255, 1);
-  --glass-blur: 18px;
-  --glass-text: #000000;
-  --btn-size-desktop: 50px;
+  --liquid-btn-bg: linear-gradient(145deg, #0A0A0A, #111111);
+  --liquid-btn-bg-hover: linear-gradient(145deg, #121212, #181818);
+  --liquid-btn-border: rgba(255, 255, 255, 0.12);
+  --liquid-btn-border-hover: rgba(255, 255, 255, 0.2);
+  --liquid-btn-text: rgba(255, 255, 255, 0.92);
+  --liquid-shadow-idle: 
+    4px 5px 14px rgba(0, 0, 0, 0.32),
+    -4px -4px 12px rgba(255, 255, 255, 0.05),
+    inset 1px 1px 1px rgba(255, 255, 255, 0.12);
+  --liquid-shadow-hover: 
+    6px 8px 20px rgba(0, 0, 0, 0.42),
+    -6px -6px 16px rgba(255, 255, 255, 0.08),
+    inset 1px 1px 1.5px rgba(255, 255, 255, 0.18);
+  --btn-size-desktop: 52px;
   --btn-size-mobile: 44px;
+}
+
+/* 1. Liquid Organic Shape Animation */
+@keyframes liquid-blob {
+  0%, 100% {
+    border-radius: 50% 50% 50% 50% / 50% 50% 50% 50%;
+  }
+  25% {
+    border-radius: 53% 47% 52% 48% / 48% 52% 47% 53%;
+  }
+  50% {
+    border-radius: 48% 52% 47% 53% / 53% 47% 52% 48%;
+  }
+  75% {
+    border-radius: 52% 48% 53% 47% / 47% 53% 48% 52%;
+  }
+}
+
+/* 2. Liquid Shadow Breathing Animation */
+@keyframes liquid-shadow {
+  0%, 100% {
+    box-shadow: 
+      4px 5px 14px rgba(0, 0, 0, 0.32),
+      -4px -4px 12px rgba(255, 255, 255, 0.05),
+      inset 1px 1px 1px rgba(255, 255, 255, 0.12);
+  }
+  50% {
+    box-shadow: 
+      6px 7px 18px rgba(0, 0, 0, 0.42),
+      -6px -6px 16px rgba(255, 255, 255, 0.08),
+      inset 1px 1px 1.5px rgba(255, 255, 255, 0.16);
+  }
+}
+
+/* 3. Subtle Restrained Ripple Ring Animation */
+@keyframes ripple-ring {
+  0% {
+    transform: scale(0.98);
+    opacity: 0.25;
+  }
+  50% {
+    transform: scale(1.06);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(0.98);
+    opacity: 0.25;
+  }
+}
+
+/* 4. Expand Button Keyframe Definition */
+@keyframes expand-button {
+  from {
+    width: var(--btn-size-desktop);
+    border-radius: 50%;
+  }
+  to {
+    width: var(--expanded-w, 136px);
+    border-radius: calc(var(--btn-size-desktop) / 2);
+  }
+}
+
+/* 5. Show Text Keyframe Definition */
+@keyframes show-text {
+  0% {
+    opacity: 0;
+    transform: translateX(-4px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 /* Persistent Fixed Container */
@@ -30,7 +107,7 @@
     transform: translateY(-50%);
     flex-direction: column;
     align-items: flex-end;
-    gap: 12px;
+    gap: 14px;
   }
 }
 
@@ -49,67 +126,114 @@
   }
 }
 
-/* Circular Glass Control Base */
-.glassButton {
+/* Neumorphic Liquid Button Base */
+.liquidButton {
   position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: flex-start;
   text-decoration: none;
-  color: var(--glass-text);
-  background: var(--glass-bg);
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--glass-shadow);
-  border-radius: 9999px;
+  background: var(--liquid-btn-bg);
+  border: 1px solid var(--liquid-btn-border);
+  box-shadow: var(--liquid-shadow-idle);
+  border-radius: 50%;
   box-sizing: border-box;
   padding: 0;
   cursor: pointer;
   overflow: hidden;
-  font-family: var(--font-editorial);
+  user-select: none;
+  color: var(--liquid-btn-text);
+  font-family: var(--font-editorial, inherit);
   transform: translateZ(0);
-  will-change: width, background-color, border-color, box-shadow;
+  will-change: width, border-radius, box-shadow;
   transition: 
-    width 0.35s cubic-bezier(0.16, 1, 0.3, 1),
-    background-color 0.32s cubic-bezier(0.16, 1, 0.3, 1),
-    border-color 0.32s cubic-bezier(0.16, 1, 0.3, 1),
-    box-shadow 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+    width 0.4s ease-out,
+    border-radius 0.4s ease-out,
+    box-shadow 0.4s ease-out,
+    border-color 0.4s ease-out,
+    background 0.4s ease-out;
 }
 
 /* Native Button Reset */
-button.glassButton {
-  border: 1px solid var(--glass-border);
+button.liquidButton {
+  border: 1px solid var(--liquid-btn-border);
   font-size: inherit;
   line-height: 1;
 }
 
-/* Desktop Dimensions */
-@media (min-width: 769px) {
-  .glassButton {
-    height: var(--btn-size-desktop);
-    min-width: var(--btn-size-desktop);
-  }
+/* Idle Continuous Liquid Organic Motion */
+.liquidButton:not(:hover):not(.expanded):not(:focus-visible) {
+  animation: 
+    liquid-blob 3.5s ease-in-out infinite,
+    liquid-shadow 3.5s ease-in-out infinite;
+  animation-delay: calc(var(--btn-index, 0) * -0.6s);
 }
 
-/* Mobile Dimensions */
-@media (max-width: 768px) {
-  .glassButton {
-    height: var(--btn-size-mobile) !important;
-    width: var(--btn-size-mobile) !important;
-    min-width: var(--btn-size-mobile) !important;
-    justify-content: center;
-  }
+/* Ripple Ring */
+.rippleRing {
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  pointer-events: none;
+  animation: ripple-ring 3.5s ease-in-out infinite;
+  animation-delay: calc(var(--btn-index, 0) * -0.6s);
+  opacity: 0;
+  z-index: 0;
+}
+
+.liquidButton:hover .rippleRing,
+.liquidButton.expanded .rippleRing,
+.liquidButton:focus-visible .rippleRing {
+  opacity: 0 !important;
+  animation: none !important;
 }
 
 /* Keyboard Focus Treatment */
-.glassButton:focus-visible {
-  outline: 2px solid rgba(0, 0, 0, 0.4);
+.liquidButton:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.65);
   outline-offset: 3px;
+}
+
+/* Desktop Dimensions & Expansion */
+@media (min-width: 769px) {
+  .liquidButton {
+    height: var(--btn-size-desktop);
+    width: var(--btn-size-desktop);
+  }
+
+  .liquidButton:hover,
+  .liquidButton.expanded,
+  .liquidButton:focus-visible {
+    width: var(--expanded-w, 136px);
+    border-radius: calc(var(--btn-size-desktop) / 2);
+    box-shadow: var(--liquid-shadow-hover);
+    background: var(--liquid-btn-bg-hover);
+    border-color: var(--liquid-btn-border-hover);
+  }
+}
+
+/* Mobile Dimensions & Expansion */
+@media (max-width: 768px) {
+  .liquidButton {
+    height: var(--btn-size-mobile);
+    width: var(--btn-size-mobile);
+  }
+
+  .liquidButton.expanded,
+  .liquidButton:focus-visible {
+    width: var(--expanded-w-mobile, 112px);
+    border-radius: calc(var(--btn-size-mobile) / 2);
+    box-shadow: var(--liquid-shadow-hover);
+    background: var(--liquid-btn-bg-hover);
+    border-color: var(--liquid-btn-border-hover);
+  }
 }
 
 /* Content wrapper inside button */
 .contentInner {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   height: 100%;
@@ -117,12 +241,12 @@ button.glassButton {
   pointer-events: none;
 }
 
-/* Icon Container: Always circular optical center */
+/* Icon Box: Optical Center */
 .iconBox {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: #000000;
+  color: var(--liquid-btn-text);
   flex-shrink: 0;
 }
 
@@ -149,44 +273,61 @@ button.glassButton {
 
 @media (max-width: 768px) {
   .iconBox svg {
-    width: 18px;
-    height: 18px;
+    width: 17px;
+    height: 17px;
   }
 }
 
 /* Expandable Text Label */
 .label {
+  font-family: var(--font-editorial, inherit);
   font-size: 13.5px;
   font-weight: 500;
-  color: #000000;
+  color: var(--liquid-btn-text);
   letter-spacing: -0.012em;
-  padding-right: 18px;
-  padding-left: 2px;
-  display: inline-block;
   opacity: 0;
+  width: 0;
+  max-width: 0;
+  overflow: hidden;
   white-space: nowrap;
   pointer-events: none;
-  transition: opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  padding-right: 0;
+  transition: 
+    opacity 0.25s ease-out,
+    max-width 0.4s ease-out,
+    padding-right 0.4s ease-out;
+}
+
+@media (min-width: 769px) {
+  .liquidButton:hover .label,
+  .liquidButton.expanded .label,
+  .liquidButton:focus-visible .label {
+    opacity: 1;
+    max-width: 140px;
+    width: auto;
+    padding-right: 18px;
+    transition: 
+      opacity 0.4s ease-out 0.1s,
+      max-width 0.4s ease-out,
+      padding-right 0.4s ease-out;
+  }
 }
 
 @media (max-width: 768px) {
   .label {
-    display: none;
-  }
-}
-
-/* Desktop Hovered / Expanded State */
-@media (min-width: 769px) {
-  .glassButton:hover,
-  .glassButton:focus-visible {
-    background: var(--glass-bg-hover);
-    border-color: var(--glass-border-hover);
-    box-shadow: var(--glass-shadow-hover);
+    font-size: 12px;
   }
 
-  .expanded .label {
+  .liquidButton.expanded .label,
+  .liquidButton:focus-visible .label {
     opacity: 1;
-    transition: opacity 0.28s cubic-bezier(0.16, 1, 0.3, 1) 0.05s;
+    max-width: 100px;
+    width: auto;
+    padding-right: 14px;
+    transition: 
+      opacity 0.4s ease-out 0.1s,
+      max-width 0.4s ease-out,
+      padding-right 0.4s ease-out;
   }
 }
 
@@ -195,20 +336,21 @@ button.glassButton {
   position: fixed;
   z-index: 110;
   pointer-events: none;
-  background: rgba(0, 0, 0, 0.88);
+  background: #0A0A0A;
   color: #ffffff;
-  font-family: var(--font-editorial);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  font-family: var(--font-editorial, inherit);
   font-size: 13px;
-  font-weight: 450;
-  padding: 8px 16px;
+  font-weight: 500;
+  padding: 8px 18px;
   border-radius: 9999px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
   letter-spacing: -0.01em;
 }
 
 @media (min-width: 769px) {
   .toast {
-    right: clamp(88px, 7vw, 120px);
+    right: clamp(92px, 7.5vw, 130px);
     top: 50%;
     transform: translateY(-50%);
   }
@@ -224,10 +366,16 @@ button.glassButton {
 
 /* Reduced Motion Fallback */
 @media (prefers-reduced-motion: reduce) {
-  .glassButton {
-    transition: none !important;
+  .liquidButton,
+  .liquidButton:not(:hover):not(.expanded):not(:focus-visible) {
+    animation: none !important;
+    transition: width 0.15s ease, border-radius 0.15s ease !important;
+  }
+  .rippleRing {
+    animation: none !important;
+    display: none !important;
   }
   .label {
-    transition: none !important;
+    transition: opacity 0.15s ease !important;
   }
 }

@@ -1,0 +1,61 @@
+/* PortraitFrameSequence — Phase 06 Cinematic Portrait Frame Sequence */
+
+.sequenceContainer {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* 
+ * 16:9 Aspect Ratio matching native 1920x1080 frames.
+ * Optical scale matches the central focal composition between FloatingNav and bottom controls.
+ */
+.canvasWrapper {
+  position: relative;
+  width: clamp(600px, 94vh, 1220px);
+  max-width: min(96vw, 1340px);
+  aspect-ratio: 16 / 9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  user-select: none;
+}
+
+.portraitCanvas {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  pointer-events: none;
+  user-select: none;
+  background-color: transparent;
+}
+
+/* Tablet adjustments (e.g. 768x1024) */
+@media (max-width: 1024px) {
+  .canvasWrapper {
+    width: clamp(520px, 84vh, 920px);
+    max-width: 96vw;
+  }
+}
+
+/* Mobile adjustments (<= 768px) */
+@media (max-width: 768px) {
+  .canvasWrapper {
+    width: 100vw;
+    max-width: 100vw;
+  }
+}
+
+/* Small mobile (<= 480px) */
+@media (max-width: 480px) {
+  .canvasWrapper {
+    width: 100vw;
+    max-width: 100vw;
+  }
+}
