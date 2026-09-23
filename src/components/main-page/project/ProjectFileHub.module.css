@@ -1,0 +1,91 @@
+/* ProjectFileHub — Phase 05 Physical 3D Project File Hub */
+
+.hubContainer {
+  position: relative;
+  display: inline-flex;
+  align-items: flex-end;
+  justify-content: center;
+  perspective: 1500px;
+  transform-style: preserve-3d;
+  user-select: none;
+  font-family: var(--font-editorial, "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  margin: 0;
+}
+
+/* 
+ * Invisible Proximity & Active Interaction Envelope
+ * Closed: ~80px buffer surrounding the compact file bounds to trigger proximity emergence.
+ * Open: Encompasses the triangular radial constellation (Card 01 top, Card 02 left, Card 03 right) + file.
+ */
+.hitArea {
+  position: absolute;
+  pointer-events: auto;
+  z-index: 1;
+  top: -80px;
+  bottom: -35px;
+  left: -80px;
+  right: -80px;
+  border-radius: 20px;
+}
+
+.hubContainer.isOpen .hitArea {
+  top: -440px;
+  bottom: -35px;
+  left: -260px;
+  right: -260px;
+}
+
+/* Project Card Stage: cards emerge strictly from inside the file */
+.projectStage {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  pointer-events: none;
+  overflow: visible;
+  z-index: 10;
+  transform-style: preserve-3d;
+}
+
+/* Tablet refinements */
+@media (max-width: 1024px) {
+  .hubContainer {
+    margin: 0;
+  }
+
+  .hitArea {
+    top: -70px;
+    bottom: -30px;
+    left: -70px;
+    right: -70px;
+  }
+
+  .hubContainer.isOpen .hitArea {
+    top: -400px;
+    bottom: -30px;
+    left: -220px;
+    right: -220px;
+  }
+}
+
+/* Mobile responsive adaptations */
+@media (max-width: 768px) {
+  .hubContainer {
+    margin: 0;
+  }
+
+  .hitArea {
+    top: -45px;
+    bottom: -20px;
+    left: -45px;
+    right: -45px;
+    max-width: calc(100vw - 32px);
+  }
+
+  .hubContainer.isOpen .hitArea {
+    top: -340px;
+    bottom: -20px;
+    left: -140px;
+    right: -140px;
+    max-width: calc(100vw - 32px);
+  }
+}

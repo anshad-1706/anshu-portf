@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useReducedMotion } from "framer-motion";
 import styles from "./MainPage.module.css";
 import { BackgroundLayer } from "./layers/BackgroundLayer";
 import { AmbientLayer } from "./layers/AmbientLayer";
@@ -6,18 +7,425 @@ import { HeroLayer } from "./layers/HeroLayer";
 import { NavigationLayer } from "./layers/NavigationLayer";
 import { SocialLayer } from "./layers/SocialLayer";
 import { ProjectLayer } from "./layers/ProjectLayer";
+import { FocusBlurLayer } from "./layers/FocusBlurLayer";
 import { CursorLayer } from "./layers/CursorLayer";
+import {
+  FORMATION_END_FRAME,
+  EXIT_START_FRAME,
+  EXIT_END_FRAME,
+  portraitPreloader,
+} from "./portrait";
 
 export interface MainPageProps {
   className?: string;
+  isNavActive?: boolean;
+  isIntroCompleted?: boolean;
 }
 
+type SequenceState =
+  | "intro"
+  | "waiting_for_home"
+  | "home"
+  | "forming_about"
+  | "about_held"
+  | "about_exiting"
+  | "about_complete";
+
 /**
- * MainPage — Phase 0 Foundation
- * Establishes the clean layered architecture and spatial coordinate system
- * for the main-page experience following the approved cinematic intro and Scene 04.
+ * MainPage — Phase 06 Architectural Correction
+ *
+ * Sequence:
+ * 1. Intro completes -> waiting_for_home (Home UI mounted, ANSHAD waiting)
+ * 2. First downward scroll -> HOME activates, ANSHAD reveals quietly in center
+ * 3. User scrolls toward ABOUT -> ANSHAD fades, portrait forms (01 -> 76), holds frame 76
+ * 4. User continues scrolling -> portrait exits (77 -> 130), About Me fully establishes
+ * 5. Reverse scrolling naturally reverses back to frame 76 and back to HOME
  */
-export const MainPage: React.FC<MainPageProps> = ({ className = "" }) => {
+export const MainPage: React.FC<MainPageProps> = ({
+  className = "",
+  isNavActive,
+  isIntroCompleted = false,
+}) => {
+  // Visual states
+  const [isHomeVisible, setIsHomeVisible] = useState<boolean>(false);
+  const [isAboutActive, setIsAboutActive] = useState<boolean>(false);
+  const [currentFrame, setCurrentFrame] = useState<number>(1);
+  const [exitProgress, setExitProgress] = useState<number>(0);
+  const [activeNavId, setActiveNavId] = useState<string>("home");
+  const [isProjectHubOpen, setIsProjectHubOpen] = useState<boolean>(false);
+
+  // State refs to ensure atomic gesture handling without stale closures
+  const stateRef = useRef<SequenceState>(
+    isIntroCompleted ? "waiting_for_home" : "intro"
+  );
+  const frameRef = useRef<number>(1);
+  const targetProgressRef = useRef<number>(0);
+  const currentProgressRef = useRef<number>(0);
+  const formationRafRef = useRef<number | null>(null);
+  const exitRafRef = useRef<number | null>(null);
+  const shouldReduceMotion = useReducedMotion() ?? false;
+
+  // Sync introCompleted state changes from App.tsx
+  useEffect(() => {
+    if (isIntroCompleted && stateRef.current === "intro") {
+      stateRef.current = "waiting_for_home";
+    }
+  }, [isIntroCompleted]);
+
+  // Preload initial portrait frames in background
+  useEffect(() => {
+    portraitPreloader.loadInitialBatch();
+  }, []);
+
+  // 1. Transition into HOME (First scroll after Intro)
+  const transitionToHome = useCallback(() => {
+    if (stateRef.current !== "waiting_for_home") return;
+    stateRef.current = "home";
+    setIsHomeVisible(true);
+    setIsAboutActive(false);
+    setActiveNavId("home");
+  }, []);
+
+  // 2. Start About portrait formation animation (frames 01 -> 76)
+  const startAboutFormation = useCallback(() => {
+    if (stateRef.current !== "home") return;
+    stateRef.current = "forming_about";
+
+    // ANSHAD fades out, portrait sequence appears
+    setIsHomeVisible(false);
+    setIsAboutActive(true);
+    setActiveNavId("about");
+
+    // Start preloading formation batch
+    portraitPreloader.loadFormationBatch();
+
+    if (shouldReduceMotion) {
+      frameRef.current = FORMATION_END_FRAME;
+      setCurrentFrame(FORMATION_END_FRAME);
+      stateRef.current = "about_held";
+      portraitPreloader.loadExitBatch();
+      return;
+    }
+
+    const startTime = performance.now();
+    const DURATION_MS = 2600; // ~2.6 seconds cinematic particle formation
+
+    const tick = (now: number) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(1, elapsed / DURATION_MS);
+      const nextFrame = Math.min(
+        FORMATION_END_FRAME,
+        Math.max(1, Math.round(1 + progress * (FORMATION_END_FRAME - 1)))
+      );
+
+      frameRef.current = nextFrame;
+      setCurrentFrame(nextFrame);
+
+      if (progress < 1) {
+        formationRafRef.current = requestAnimationFrame(tick);
+      } else {
+        frameRef.current = FORMATION_END_FRAME;
+        setCurrentFrame(FORMATION_END_FRAME);
+        stateRef.current = "about_held";
+        formationRafRef.current = null;
+        portraitPreloader.loadExitBatch();
+      }
+    };
+
+    formationRafRef.current = requestAnimationFrame(tick);
+  }, [shouldReduceMotion]);
+
+  // 3. Return from About back to Home
+  const returnToHome = useCallback(() => {
+    if (formationRafRef.current) {
+      cancelAnimationFrame(formationRafRef.current);
+      formationRafRef.current = null;
+    }
+    if (exitRafRef.current) {
+      cancelAnimationFrame(exitRafRef.current);
+      exitRafRef.current = null;
+    }
+
+    targetProgressRef.current = 0;
+    currentProgressRef.current = 0;
+    setExitProgress(0);
+    frameRef.current = 1;
+    setCurrentFrame(1);
+
+    setIsAboutActive(false);
+    setIsHomeVisible(true);
+    setActiveNavId("home");
+    stateRef.current = "home";
+  }, []);
+
+  // 4. Smooth exit progress interpolation loop for frames 77 -> 130
+  const startExitLoop = useCallback(() => {
+    if (exitRafRef.current) return;
+
+    const tick = () => {
+      const diff = targetProgressRef.current - currentProgressRef.current;
+
+      if (Math.abs(diff) > 0.001) {
+        currentProgressRef.current += diff * 0.14;
+        const p = Math.max(0, Math.min(1, currentProgressRef.current));
+        setExitProgress(p);
+
+        // Map normalized progress to frames 77 -> 130
+        const nextFrame = Math.max(
+          EXIT_START_FRAME,
+          Math.min(
+            EXIT_END_FRAME,
+            Math.round(EXIT_START_FRAME + p * (EXIT_END_FRAME - EXIT_START_FRAME))
+          )
+        );
+        frameRef.current = nextFrame;
+        setCurrentFrame(nextFrame);
+
+        if (p <= 0.002 && targetProgressRef.current === 0) {
+          currentProgressRef.current = 0;
+          setExitProgress(0);
+          frameRef.current = FORMATION_END_FRAME;
+          setCurrentFrame(FORMATION_END_FRAME);
+          stateRef.current = "about_held";
+          exitRafRef.current = null;
+          return;
+        }
+
+        if (p >= 0.998 && targetProgressRef.current === 1) {
+          currentProgressRef.current = 1;
+          setExitProgress(1);
+          frameRef.current = EXIT_END_FRAME;
+          setCurrentFrame(EXIT_END_FRAME);
+          stateRef.current = "about_complete";
+          exitRafRef.current = null;
+          return;
+        }
+
+        stateRef.current = "about_exiting";
+        exitRafRef.current = requestAnimationFrame(tick);
+      } else {
+        currentProgressRef.current = targetProgressRef.current;
+        const p = currentProgressRef.current;
+        setExitProgress(p);
+
+        if (p === 0) {
+          frameRef.current = FORMATION_END_FRAME;
+          setCurrentFrame(FORMATION_END_FRAME);
+          stateRef.current = "about_held";
+        } else if (p === 1) {
+          frameRef.current = EXIT_END_FRAME;
+          setCurrentFrame(EXIT_END_FRAME);
+          stateRef.current = "about_complete";
+        } else {
+          const nextFrame = Math.max(
+            EXIT_START_FRAME,
+            Math.min(
+              EXIT_END_FRAME,
+              Math.round(
+                EXIT_START_FRAME + p * (EXIT_END_FRAME - EXIT_START_FRAME)
+              )
+            )
+          );
+          frameRef.current = nextFrame;
+          setCurrentFrame(nextFrame);
+          stateRef.current = "about_exiting";
+        }
+        exitRafRef.current = null;
+      }
+    };
+
+    exitRafRef.current = requestAnimationFrame(tick);
+  }, []);
+
+  // Event Listeners: ONLY active once Intro is completed
+  useEffect(() => {
+    if (!isIntroCompleted) return;
+
+    let touchStartY = 0;
+
+    const handleWheel = (e: WheelEvent) => {
+      const currentState = stateRef.current;
+
+      // 1. In WAITING_FOR_HOME: first downward scroll enters HOME
+      if (currentState === "waiting_for_home") {
+        if (e.deltaY > 5) {
+          e.preventDefault();
+          transitionToHome();
+        }
+        return;
+      }
+
+      // 2. In HOME:
+      if (currentState === "home") {
+        if (e.deltaY < 0) {
+          // At top of Home, prevent scrolling above/replaying intro
+          e.preventDefault();
+          return;
+        }
+        if (e.deltaY > 8) {
+          // Scroll down from Home triggers About transition
+          e.preventDefault();
+          startAboutFormation();
+        }
+        return;
+      }
+
+      // 3. In FORMING_ABOUT: input locked during automatic 01 -> 76 formation
+      if (currentState === "forming_about") {
+        e.preventDefault();
+        return;
+      }
+
+      // 4. In ABOUT_HELD:
+      if (currentState === "about_held") {
+        if (e.deltaY < -15) {
+          // Scrolling up from frame 76 returns cleanly to HOME
+          e.preventDefault();
+          returnToHome();
+          return;
+        }
+        if (e.deltaY > 0) {
+          // Scrolling down begins exit progress 77 -> 130
+          e.preventDefault();
+          targetProgressRef.current = Math.min(
+            1,
+            targetProgressRef.current + e.deltaY / 750
+          );
+          startExitLoop();
+        }
+        return;
+      }
+
+      // 5. In ABOUT_EXITING or ABOUT_COMPLETE:
+      if (currentState === "about_exiting" || currentState === "about_complete") {
+        e.preventDefault();
+        const deltaNormalized = e.deltaY / 750;
+        const newTarget = Math.max(
+          0,
+          Math.min(1, targetProgressRef.current + deltaNormalized)
+        );
+
+        // If reversing up reaches 0, return to about_held or home
+        if (newTarget === 0 && targetProgressRef.current === 0 && e.deltaY < -15) {
+          returnToHome();
+          return;
+        }
+
+        targetProgressRef.current = newTarget;
+        startExitLoop();
+      }
+    };
+
+    const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches.length > 0) {
+        touchStartY = e.touches[0].clientY;
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches.length === 0) return;
+      const currentY = e.touches[0].clientY;
+      const deltaY = touchStartY - currentY; // positive = swipe up = scroll down
+      const currentState = stateRef.current;
+
+      if (currentState === "waiting_for_home") {
+        if (deltaY > 10) {
+          if (e.cancelable) e.preventDefault();
+          touchStartY = currentY;
+          transitionToHome();
+        }
+        return;
+      }
+
+      if (currentState === "home") {
+        if (deltaY < -5) {
+          if (e.cancelable) e.preventDefault();
+          return;
+        }
+        if (deltaY > 15) {
+          if (e.cancelable) e.preventDefault();
+          touchStartY = currentY;
+          startAboutFormation();
+        }
+        return;
+      }
+
+      if (currentState === "forming_about") {
+        if (e.cancelable) e.preventDefault();
+        return;
+      }
+
+      if (currentState === "about_held") {
+        if (deltaY < -20) {
+          if (e.cancelable) e.preventDefault();
+          returnToHome();
+          return;
+        }
+        if (deltaY > 2) {
+          if (e.cancelable) e.preventDefault();
+          targetProgressRef.current = Math.min(
+            1,
+            targetProgressRef.current + deltaY / 550
+          );
+          touchStartY = currentY;
+          startExitLoop();
+        }
+        return;
+      }
+
+      if (currentState === "about_exiting" || currentState === "about_complete") {
+        if (Math.abs(deltaY) > 2) {
+          if (e.cancelable) e.preventDefault();
+          const newTarget = Math.max(
+            0,
+            Math.min(1, targetProgressRef.current + deltaY / 550)
+          );
+
+          if (newTarget === 0 && targetProgressRef.current === 0 && deltaY < -20) {
+            returnToHome();
+            return;
+          }
+
+          targetProgressRef.current = newTarget;
+          touchStartY = currentY;
+          startExitLoop();
+        }
+      }
+    };
+
+    window.addEventListener("wheel", handleWheel, { passive: false });
+    window.addEventListener("touchstart", handleTouchStart, { passive: true });
+    window.addEventListener("touchmove", handleTouchMove, { passive: false });
+
+    return () => {
+      window.removeEventListener("wheel", handleWheel);
+      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchmove", handleTouchMove);
+      if (formationRafRef.current) cancelAnimationFrame(formationRafRef.current);
+      if (exitRafRef.current) cancelAnimationFrame(exitRafRef.current);
+    };
+  }, [
+    isIntroCompleted,
+    transitionToHome,
+    startAboutFormation,
+    returnToHome,
+    startExitLoop,
+  ]);
+
+  // Handle direct navigation selection (clicking Home, Work, About in navbar)
+  const handleNavSelect = useCallback(
+    (id: string) => {
+      if (id === "home" || id === "work") {
+        returnToHome();
+      } else if (id === "about") {
+        if (stateRef.current === "waiting_for_home" || stateRef.current === "home") {
+          startAboutFormation();
+        }
+      }
+    },
+    [returnToHome, startAboutFormation]
+  );
+
   return (
     <section
       className={`${styles.mainPageContainer} ${className}`.trim()}
@@ -29,19 +437,34 @@ export const MainPage: React.FC<MainPageProps> = ({ className = "" }) => {
       {/* 2. Ambient Atmosphere Layer (z-index: 2) */}
       <AmbientLayer />
 
-      {/* 3. Central Hero & Portrait Layer (z-index: 10) */}
-      <HeroLayer />
+      {/* 3. Central Hero Layer: Central ANSHAD, About Portrait, and AboutSection (z-index: 10) */}
+      <HeroLayer
+        isHomeVisible={isHomeVisible}
+        isAboutActive={isAboutActive}
+        currentFrame={currentFrame}
+        exitProgress={exitProgress}
+      />
 
-      {/* 4. Social Layer — Future spatial anchor only (z-index: 20) */}
+      {/* 4. Social Layer — Bottom-Left Controls (z-index: 20) */}
       <SocialLayer />
 
-      {/* 5. Project Layer — Future project file & constellation hub (z-index: 30) */}
-      <ProjectLayer />
+      {/* 5. Navigation Layer — Top-Left Brand & Top-Center Nav (z-index: 40) */}
+      <NavigationLayer
+        isNavActive={isNavActive}
+        activeNavId={activeNavId}
+        onNavSelect={handleNavSelect}
+      />
 
-      {/* 6. Navigation Layer — Top brand & top-center nav (z-index: 40) */}
-      <NavigationLayer />
+      {/* 6. Focus Blur Layer — Background blur behind centered ProjectFileHub (z-index: 45) */}
+      <FocusBlurLayer isBlurred={isProjectHubOpen} />
 
-      {/* 7. Cursor Layer — Overlay for future custom 3D cursor (z-index: 100) */}
+      {/* 7. Project Layer — Optical Center Project File Hub (z-index: 60) */}
+      <ProjectLayer
+        isHomeVisible={isHomeVisible}
+        onOpenChange={setIsProjectHubOpen}
+      />
+
+      {/* 8. Cursor Layer (z-index: 100) */}
       <CursorLayer />
     </section>
   );

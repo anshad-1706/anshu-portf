@@ -1,0 +1,58 @@
+/* CentralHero — Phase 06 Central Home Visual (ANSHAD Identity) */
+
+.heroContainer {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* 
+ * Main typography identity: ANSHAD in Akira Expanded Demo
+ * Quietly settles into optical center with restrained cinematic easing
+ */
+.nameHeading {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0 1.25rem;
+  font-family: var(--font-hero);
+  font-size: var(--hero-font-size);
+  font-weight: var(--hero-font-weight);
+  letter-spacing: var(--hero-letter-spacing);
+  color: var(--color-primary, #000000);
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+  will-change: opacity, transform, filter;
+  transition:
+    opacity 850ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 850ms cubic-bezier(0.16, 1, 0.3, 1),
+    filter 850ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.nameHidden {
+  opacity: 0;
+  filter: blur(12px);
+  transform: translateY(8px) scale(0.97);
+}
+
+.nameVisible {
+  opacity: 1;
+  filter: blur(0px);
+  transform: translateY(0px) scale(1);
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .nameHeading {
+    transition-duration: 0ms !important;
+    filter: none !important;
+  }
+}

@@ -2,10 +2,18 @@ import React, { useEffect, useRef } from "react";
 import styles from "./Cursor.module.css";
 import { CursorBody } from "./CursorBody";
 
+// Calibrated visual pivot offset within the 22x22px geometry
+const PIVOT_X = 10;
+const PIVOT_Y = 11;
+
+// Starting movement threshold in px to filter micro-jitter while tracking slow deliberate movement
+const MOVEMENT_THRESHOLD = 0.8;
+
 /**
- * CustomCursor — Phase 01 Implementation
- * Desktop-only custom 3D graphite cursor with rAF-driven inertia,
- * velocity tilt, and non-oscillating settling physics.
+ * CustomCursor — Refined 2D Directional Physical Cursor
+ * Desktop-only custom graphite cursor with rAF-driven continuous 360°
+ * directional orientation, shortest-path angular interpolation, and
+ * physical inertia while strictly preserving the last meaningful direction when stationary.
  */
 export const CustomCursor: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -14,11 +22,12 @@ export const CustomCursor: React.FC = () => {
   // Position coordinates (raw target vs smooth rendered)
   const targetPos = useRef({ x: -100, y: -100 });
   const currentPos = useRef({ x: -100, y: -100 });
-  const prevTargetPos = useRef({ x: -100, y: -100 });
+  const prevMovePos = useRef({ x: -100, y: -100 });
 
-  // 3D tilt rotation states (degrees)
-  const currentTilt = useRef({ x: 0, y: 0, z: 0 });
-  const targetTilt = useRef({ x: 0, y: 0, z: 0 });
+  // 2D continuous orientation angles in degrees (-180° to 180°)
+  // Base calibration: 0° points horizontally RIGHT (+X)
+  const targetAngle = useRef(0);
+  const currentAngle = useRef(0);
 
   // Lifecycle & loop refs
   const rafId = useRef<number | null>(null);
@@ -44,64 +53,78 @@ export const CustomCursor: React.FC = () => {
     const lerp = (start: number, end: number, factor: number) =>
       start + (end - start) * factor;
 
-    // Animation loop (runs during movement and through settling frames)
+    // Shortest-path angular delta calculator (handles -180° / 180° wrap seamlessly)
+    const getShortestAngleDelta = (target: number, current: number): number => {
+      let delta = (target - current) % 360;
+      if (delta < -180) delta += 360;
+      if (delta > 180) delta -= 360;
+      return delta;
+    };
+
+    // Animation loop (runs during movement and through smooth settling)
     const updateMotion = () => {
       const isReduced = reducedMotionQuery.matches;
 
       if (isReduced) {
-        // Direct tracking with zero tilt for reduced motion
+        // Direct tracking with instant functional directional orientation (no decorative lag)
         currentPos.current.x = targetPos.current.x;
         currentPos.current.y = targetPos.current.y;
-        currentTilt.current = { x: 0, y: 0, z: 0 };
+        currentAngle.current = targetAngle.current;
       } else {
-        // Organic exponential interpolation for position
-        currentPos.current.x = lerp(currentPos.current.x, targetPos.current.x, 0.22);
-        currentPos.current.y = lerp(currentPos.current.y, targetPos.current.y, 0.22);
+        // Weighted, responsive position interpolation
+        currentPos.current.x = lerp(currentPos.current.x, targetPos.current.x, 0.25);
+        currentPos.current.y = lerp(currentPos.current.y, targetPos.current.y, 0.25);
 
-        // Smooth decay of tilt toward target tilt (approx 160ms settling curve)
-        currentTilt.current.x = lerp(currentTilt.current.x, targetTilt.current.x, 0.16);
-        currentTilt.current.y = lerp(currentTilt.current.y, targetTilt.current.y, 0.16);
-        currentTilt.current.z = lerp(currentTilt.current.z, targetTilt.current.z, 0.16);
+        // Shortest-path angular interpolation with subtle physical inertia
+        const angleDelta = getShortestAngleDelta(
+          targetAngle.current,
+          currentAngle.current
+        );
+        currentAngle.current += angleDelta * 0.20;
+
+        // Keep currentAngle bounded in [-180, 180]
+        currentAngle.current =
+          (((currentAngle.current + 180) % 360) + 360) % 360 - 180;
       }
 
       // Apply transforms directly to DOM refs to avoid React re-render overhead
       if (containerRef.current) {
-        containerRef.current.style.transform = `translate3d(${currentPos.current.x.toFixed(2)}px, ${currentPos.current.y.toFixed(2)}px, 0)`;
+        containerRef.current.style.transform = `translate3d(${(currentPos.current.x - PIVOT_X).toFixed(2)}px, ${(currentPos.current.y - PIVOT_Y).toFixed(2)}px, 0)`;
       }
 
       if (bodyRef.current) {
-        bodyRef.current.style.transform = `perspective(600px) rotateX(${currentTilt.current.x.toFixed(2)}deg) rotateY(${currentTilt.current.y.toFixed(2)}deg) rotateZ(${currentTilt.current.z.toFixed(2)}deg)`;
+        bodyRef.current.style.transform = `rotate(${currentAngle.current.toFixed(2)}deg)`;
       }
 
-      // Settling check: distance and angular delta
-      const dx = Math.abs(targetPos.current.x - currentPos.current.x);
-      const dy = Math.abs(targetPos.current.y - currentPos.current.y);
-      const dt =
-        Math.abs(currentTilt.current.x) +
-        Math.abs(currentTilt.current.y) +
-        Math.abs(currentTilt.current.z);
+      // Settling check: evaluate positional distance and angular delta
+      const posDelta = Math.hypot(
+        targetPos.current.x - currentPos.current.x,
+        targetPos.current.y - currentPos.current.y
+      );
+      const angleDelta = Math.abs(
+        getShortestAngleDelta(targetAngle.current, currentAngle.current)
+      );
 
-      // Once motion has completed and angles have returned to neutral:
-      if (dx < 0.15 && dy < 0.15 && dt < 0.15) {
-        // Lock to exact position and zero rotation
+      // Once position and angle have smoothly settled:
+      if (posDelta < 0.1 && angleDelta < 0.1) {
         currentPos.current.x = targetPos.current.x;
         currentPos.current.y = targetPos.current.y;
-        currentTilt.current = { x: 0, y: 0, z: 0 };
+        currentAngle.current = targetAngle.current;
 
         if (containerRef.current) {
-          containerRef.current.style.transform = `translate3d(${currentPos.current.x.toFixed(2)}px, ${currentPos.current.y.toFixed(2)}px, 0)`;
+          containerRef.current.style.transform = `translate3d(${(currentPos.current.x - PIVOT_X).toFixed(2)}px, ${(currentPos.current.y - PIVOT_Y).toFixed(2)}px, 0)`;
         }
         if (bodyRef.current) {
-          bodyRef.current.style.transform = "perspective(600px) rotateX(0deg) rotateY(0deg) rotateZ(0deg)";
+          bodyRef.current.style.transform = `rotate(${currentAngle.current.toFixed(2)}deg)`;
         }
 
-        // Suspend rAF loop until next pointermove
+        // Suspend rAF loop while strictly preserving targetAngle & currentAngle
         isLoopRunning.current = false;
         rafId.current = null;
         return;
       }
 
-      // Continue settling loop
+      // Continue motion loop until fully settled
       rafId.current = requestAnimationFrame(updateMotion);
     };
 
@@ -112,7 +135,7 @@ export const CustomCursor: React.FC = () => {
       }
     };
 
-    // Pointer move listener
+    // Pointer move listener: tracks 2D movement vector dx & dy
     const onPointerMove = (e: PointerEvent) => {
       targetPos.current.x = e.clientX;
       targetPos.current.y = e.clientY;
@@ -120,56 +143,45 @@ export const CustomCursor: React.FC = () => {
       if (isFirstMove.current) {
         currentPos.current.x = e.clientX;
         currentPos.current.y = e.clientY;
-        prevTargetPos.current.x = e.clientX;
-        prevTargetPos.current.y = e.clientY;
+        prevMovePos.current.x = e.clientX;
+        prevMovePos.current.y = e.clientY;
         isFirstMove.current = false;
       }
 
-      // Make visible when pointer is active
+      // Reveal cursor once active pointer coordinates exist
       if (!isPointerInside.current) {
         isPointerInside.current = true;
         containerRef.current?.classList.add(styles.visible);
         document.documentElement.classList.add("has-custom-cursor");
       }
 
-      // Compute velocity vectors
-      const vx = e.clientX - prevTargetPos.current.x;
-      const vy = e.clientY - prevTargetPos.current.y;
-      prevTargetPos.current.x = e.clientX;
-      prevTargetPos.current.y = e.clientY;
+      // Compute full 2D movement vector
+      const dx = e.clientX - prevMovePos.current.x;
+      const dy = e.clientY - prevMovePos.current.y;
+      const dist = Math.hypot(dx, dy);
 
-      // Calculate directional tilt angles based on velocity
-      // Horizontal velocity rolls along Y-axis; Vertical pitches along X-axis
-      const rollY = Math.min(Math.max(vx * 0.55, -14), 14);
-      const pitchX = Math.min(Math.max(-vy * 0.55, -14), 14);
-      const bankZ = Math.min(Math.max(vx * 0.22, -8), 8);
+      // Check against threshold to prevent jitter on microscopic vibrations,
+      // while remaining responsive to slow deliberate movement
+      if (dist >= MOVEMENT_THRESHOLD) {
+        // Calculate continuous 2D angle (atan2 yields radians in [-PI, PI])
+        // With SVG calibrated horizontally pointing right, atan2 maps:
+        // 0° = Right, 90° = Down, 180° = Left, -90° = Up
+        const angleRad = Math.atan2(dy, dx);
+        targetAngle.current = (angleRad * 180) / Math.PI;
 
-      targetTilt.current = { x: pitchX, y: rollY, z: bankZ };
+        prevMovePos.current.x = e.clientX;
+        prevMovePos.current.y = e.clientY;
+      }
 
-      // Ensure the loop runs
+      // Trigger rAF loop
       startLoopIfNeeded();
     };
 
-    // When pointer stops moving in the window:
-    // Reset target tilt to neutral so it smoothly decays back within 150–200ms
-    let stopTimer: number | null = null;
-    const onPointerMoveWithStopDetection = (e: PointerEvent) => {
-      onPointerMove(e);
-
-      if (stopTimer !== null) {
-        clearTimeout(stopTimer);
-      }
-      stopTimer = window.setTimeout(() => {
-        targetTilt.current = { x: 0, y: 0, z: 0 };
-      }, 40);
-    };
-
-    // Viewport boundary detection
+    // Viewport boundary handlers
     const onMouseLeave = () => {
       isPointerInside.current = false;
       containerRef.current?.classList.remove(styles.visible);
       document.documentElement.classList.remove("has-custom-cursor");
-      targetTilt.current = { x: 0, y: 0, z: 0 };
     };
 
     const onMouseEnter = () => {
@@ -178,22 +190,17 @@ export const CustomCursor: React.FC = () => {
       document.documentElement.classList.add("has-custom-cursor");
     };
 
-    window.addEventListener("pointermove", onPointerMoveWithStopDetection, {
-      passive: true,
-    });
+    window.addEventListener("pointermove", onPointerMove, { passive: true });
     document.documentElement.addEventListener("mouseleave", onMouseLeave);
     document.documentElement.addEventListener("mouseenter", onMouseEnter);
 
     return () => {
-      window.removeEventListener("pointermove", onPointerMoveWithStopDetection);
+      window.removeEventListener("pointermove", onPointerMove);
       document.documentElement.removeEventListener("mouseleave", onMouseLeave);
       document.documentElement.removeEventListener("mouseenter", onMouseEnter);
       document.documentElement.classList.remove("has-custom-cursor");
       if (rafId.current !== null) {
         cancelAnimationFrame(rafId.current);
-      }
-      if (stopTimer !== null) {
-        clearTimeout(stopTimer);
       }
     };
   }, []);

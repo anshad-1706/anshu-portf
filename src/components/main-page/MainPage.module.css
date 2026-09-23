@@ -12,12 +12,12 @@
 
   position: relative;
   width: 100%;
-  min-height: 100vh;
-  min-height: 100dvh;
+  height: 100vh;
+  height: 100dvh;
   background-color: var(--bg-canvas, #ffffff);
 
-  /* Crucial: No overflow: hidden here so radial project cards can expand without clipping */
-  overflow: visible;
+  /* Pinned 100vh viewport prevents page scroll during cinematic transition */
+  overflow: hidden;
 
   /* Stage container itself is non-blocking; child anchors enable pointer events explicitly */
   pointer-events: none;

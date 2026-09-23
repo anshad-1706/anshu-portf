@@ -1,22 +1,40 @@
 import React from "react";
 import styles from "./layers.module.css";
+import { ProjectFileHub } from "../project";
 
-interface ProjectLayerProps {
+export interface ProjectLayerProps {
   children?: React.ReactNode;
+  className?: string;
+  isHomeVisible?: boolean;
+  onOpenChange?: (isOpen: boolean) => void;
 }
 
 /**
- * ProjectLayer — Future project file & radial constellation spatial region anchor only.
- * Non-restrictive overflow allows future radial cards to expand cleanly.
+ * ProjectLayer — Phase 05 & Phase 06.1
+ * Project File Hub centered optically in the Home page.
+ * Coordinates optical center placement (z-index: 60) with unclipped overflow.
+ * Smoothly transitions out when navigating toward About.
  */
-export const ProjectLayer: React.FC<ProjectLayerProps> = ({ children }) => {
+export const ProjectLayer: React.FC<ProjectLayerProps> = ({
+  children,
+  className = "",
+  isHomeVisible = true,
+  onOpenChange,
+}) => {
   return (
     <div
-      className={`${styles.layerBase} ${styles.projectLayer}`}
+      className={`${styles.layerBase} ${styles.projectLayer} ${className}`.trim()}
       data-layer="project"
+      style={{
+        opacity: isHomeVisible ? 1 : 0,
+        visibility: isHomeVisible ? "visible" : "hidden",
+        pointerEvents: isHomeVisible ? "auto" : "none",
+        transition:
+          "opacity 450ms cubic-bezier(0.16, 1, 0.3, 1), visibility 450ms",
+      }}
     >
       <div className={styles.projectAnchor} data-anchor="project">
-        {children}
+        {children || <ProjectFileHub onOpenChange={onOpenChange} />}
       </div>
     </div>
   );

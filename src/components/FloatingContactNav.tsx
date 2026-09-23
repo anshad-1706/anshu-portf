@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   motion,
   AnimatePresence,
@@ -18,6 +18,7 @@ interface ContactButtonConfig {
   ariaLabel: string;
   href?: string;
   expandedWidthDesktop: number;
+  expandedWidthMobile: number;
   icon: React.ReactNode;
 }
 
@@ -91,7 +92,8 @@ const BUTTONS_CONFIG: ContactButtonConfig[] = [
     label: "LinkedIn",
     ariaLabel: "LinkedIn",
     href: LINKEDIN_URL,
-    expandedWidthDesktop: 130,
+    expandedWidthDesktop: 138,
+    expandedWidthMobile: 118,
     icon: <LinkedInIcon />,
   },
   {
@@ -99,7 +101,8 @@ const BUTTONS_CONFIG: ContactButtonConfig[] = [
     label: "GitHub",
     ariaLabel: "GitHub",
     href: GITHUB_URL,
-    expandedWidthDesktop: 124,
+    expandedWidthDesktop: 130,
+    expandedWidthMobile: 112,
     icon: <GitHubIcon />,
   },
   {
@@ -107,14 +110,16 @@ const BUTTONS_CONFIG: ContactButtonConfig[] = [
     label: "Mail",
     ariaLabel: "Email",
     href: MAIL_URL,
-    expandedWidthDesktop: 106,
+    expandedWidthDesktop: 112,
+    expandedWidthMobile: 98,
     icon: <MailIcon />,
   },
   {
     id: "contact",
     label: "Contact",
     ariaLabel: "Contact",
-    expandedWidthDesktop: 126,
+    expandedWidthDesktop: 134,
+    expandedWidthMobile: 114,
     icon: <ContactIcon />,
   },
 ];
@@ -127,8 +132,21 @@ export const FloatingContactNav: React.FC<FloatingContactNavProps> = ({
   isActive,
 }) => {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [activeId, setActiveId] = useState<string | null>(null);
   const [showToast, setShowToast] = useState(false);
+  const navRef = useRef<HTMLElement | null>(null);
   const shouldReduceMotion = useReducedMotion() ?? false;
+
+  // Handle outside clicks to collapse expanded state on touch devices
+  useEffect(() => {
+    const handlePointerDown = (e: PointerEvent) => {
+      if (navRef.current && !navRef.current.contains(e.target as Node)) {
+        setActiveId(null);
+      }
+    };
+    window.addEventListener("pointerdown", handlePointerDown);
+    return () => window.removeEventListener("pointerdown", handlePointerDown);
+  }, []);
 
   const handleContactClick = () => {
     // Copy contact email to clipboard or display notification
@@ -139,6 +157,32 @@ export const FloatingContactNav: React.FC<FloatingContactNavProps> = ({
     setTimeout(() => {
       setShowToast(false);
     }, 2400);
+  };
+
+  const handleButtonClick = (
+    e: React.MouseEvent,
+    btn: ContactButtonConfig
+  ) => {
+    // Check if on touch/pointer-coarse device
+    const isTouch =
+      typeof window !== "undefined" &&
+      (window.matchMedia("(hover: none) and (pointer: coarse)").matches ||
+        "ontouchstart" in window);
+
+    if (isTouch) {
+      if (activeId !== btn.id) {
+        // First tap: expand the selected button, prevent immediate navigation
+        e.preventDefault();
+        setActiveId(btn.id);
+        return;
+      }
+      // Second tap on the same button: allow action/navigation
+      setActiveId(null);
+    }
+
+    if (btn.id === "contact") {
+      handleContactClick();
+    }
   };
 
   // Entrance variants: triggered automatically once Scene 04 begins
@@ -176,24 +220,28 @@ export const FloatingContactNav: React.FC<FloatingContactNavProps> = ({
       <AnimatePresence>
         {isActive && (
           <nav
+            ref={navRef}
             className={styles.navContainer}
             aria-label="Floating Contact Navigation"
           >
             {BUTTONS_CONFIG.map((btn, index) => {
-              const isHovered = hoveredId === btn.id;
+              const isExpanded = hoveredId === btn.id || activeId === btn.id;
 
-              // Content inside button
+              const buttonStyle = {
+                "--expanded-w": `${btn.expandedWidthDesktop}px`,
+                "--expanded-w-mobile": `${btn.expandedWidthMobile}px`,
+                "--btn-index": index,
+              } as React.CSSProperties;
+
               const innerContent = (
-                <div className={styles.contentInner}>
-                  <span className={styles.iconBox}>{btn.icon}</span>
-                  <span className={styles.label}>{btn.label}</span>
-                </div>
+                <>
+                  <span className={styles.rippleRing} aria-hidden="true" />
+                  <div className={styles.contentInner}>
+                    <span className={styles.iconBox}>{btn.icon}</span>
+                    <span className={styles.label}>{btn.label}</span>
+                  </div>
+                </>
               );
-
-              // Standard Framer Motion animated pill width for desktop
-              const animatedPillWidth = isHovered
-                ? btn.expandedWidthDesktop
-                : 50;
 
               if (btn.href) {
                 return (
@@ -203,7 +251,7 @@ export const FloatingContactNav: React.FC<FloatingContactNavProps> = ({
                     target={btn.id === "mail" ? undefined : "_blank"}
                     rel={btn.id === "mail" ? undefined : "noopener noreferrer"}
                     aria-label={btn.ariaLabel}
-                    className={`${styles.glassButton} ${isHovered ? styles.expanded : ""}`}
+                    className={`${styles.liquidButton} ${isExpanded ? styles.expanded : ""}`}
                     custom={index}
                     variants={buttonVariants}
                     initial="hidden"
@@ -213,9 +261,8 @@ export const FloatingContactNav: React.FC<FloatingContactNavProps> = ({
                     onMouseLeave={() => setHoveredId(null)}
                     onFocus={() => setHoveredId(btn.id)}
                     onBlur={() => setHoveredId(null)}
-                    style={{
-                      width: animatedPillWidth,
-                    }}
+                    onClick={(e) => handleButtonClick(e, btn)}
+                    style={buttonStyle}
                   >
                     {innerContent}
                   </motion.a>
@@ -226,9 +273,8 @@ export const FloatingContactNav: React.FC<FloatingContactNavProps> = ({
                 <motion.button
                   key={btn.id}
                   type="button"
-                  onClick={handleContactClick}
                   aria-label={btn.ariaLabel}
-                  className={`${styles.glassButton} ${isHovered ? styles.expanded : ""}`}
+                  className={`${styles.liquidButton} ${isExpanded ? styles.expanded : ""}`}
                   custom={index}
                   variants={buttonVariants}
                   initial="hidden"
@@ -238,9 +284,8 @@ export const FloatingContactNav: React.FC<FloatingContactNavProps> = ({
                   onMouseLeave={() => setHoveredId(null)}
                   onFocus={() => setHoveredId(btn.id)}
                   onBlur={() => setHoveredId(null)}
-                  style={{
-                    width: animatedPillWidth,
-                  }}
+                  onClick={(e) => handleButtonClick(e, btn)}
+                  style={buttonStyle}
                 >
                   {innerContent}
                 </motion.button>

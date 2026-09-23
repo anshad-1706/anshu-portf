@@ -5,4 +5,7 @@ export { HeroLayer } from "./layers/HeroLayer";
 export { NavigationLayer } from "./layers/NavigationLayer";
 export { SocialLayer } from "./layers/SocialLayer";
 export { ProjectLayer } from "./layers/ProjectLayer";
+export { FocusBlurLayer } from "./layers/FocusBlurLayer";
 export { CursorLayer } from "./layers/CursorLayer";
+export { SocialControls } from "./social";
+export { ProjectFileHub, ProjectCard } from "./project";
