@@ -6,8 +6,9 @@
   --z-ambient: 2;
   --z-hero: 10;
   --z-social: 20;
-  --z-project: 30;
   --z-navigation: 40;
+  --z-focus-blur: 45;
+  --z-project: 60;
   --z-cursor: 100;
 
   position: relative;

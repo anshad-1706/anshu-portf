@@ -87,7 +87,7 @@
   pointer-events: auto;
 }
 
-/* 6. Focus Blur Layer — Phase 06.1 Progressive background/UI blur behind ProjectFileHub */
+/* 6. Focus Blur Layer — Phase 06.2 Subtle background focus de-emphasis behind ProjectFileHub */
 .focusBlurLayer {
   position: fixed;
   inset: 0;
@@ -100,22 +100,29 @@
   -webkit-backdrop-filter: blur(0px);
   background-color: rgba(255, 255, 255, 0);
   opacity: 0;
+  /* Closing transition: ~450ms */
   transition:
-    backdrop-filter 520ms cubic-bezier(0.16, 1, 0.3, 1),
-    -webkit-backdrop-filter 520ms cubic-bezier(0.16, 1, 0.3, 1),
-    background-color 520ms cubic-bezier(0.16, 1, 0.3, 1),
-    opacity 520ms cubic-bezier(0.16, 1, 0.3, 1);
+    backdrop-filter 450ms cubic-bezier(0.16, 1, 0.3, 1),
+    -webkit-backdrop-filter 450ms cubic-bezier(0.16, 1, 0.3, 1),
+    background-color 450ms cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 450ms cubic-bezier(0.16, 1, 0.3, 1);
   will-change: backdrop-filter, opacity;
 }
 
 .focusBlurActive {
   opacity: 1;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  background-color: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  background-color: rgba(255, 255, 255, 0.06);
+  /* Opening transition: ~500ms */
+  transition:
+    backdrop-filter 500ms cubic-bezier(0.16, 1, 0.3, 1),
+    -webkit-backdrop-filter 500ms cubic-bezier(0.16, 1, 0.3, 1),
+    background-color 500ms cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 500ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* 7. Project Layer — Phase 06.1 Optical Center Project File Hub */
+/* 7. Project Layer — Phase 06.3 Vertical Composition Below ANSHAD (+150px downward translation) */
 .projectLayer {
   z-index: var(--z-project, 60);
   height: 100vh;
@@ -134,12 +141,21 @@
   justify-content: center;
   pointer-events: auto;
   overflow: visible;
+  /* Desktop responsive optical offset sitting below central ANSHAD (+150px translation) */
+  transform: translateY(clamp(280px, calc(15vh + 150px), 320px));
 }
 
 /* 8. Cursor Layer */
 .cursorLayer {
   z-index: var(--z-cursor, 100);
   pointer-events: none;
+}
+
+/* Responsive adjustments for tablet viewports */
+@media (max-width: 1024px) {
+  .projectAnchor {
+    transform: translateY(clamp(240px, calc(11vh + 150px), 275px));
+  }
 }
 
 /* Responsive adjustments for mobile viewports */
@@ -160,9 +176,15 @@
     left: max(16px, env(safe-area-inset-left, 16px));
   }
 
+  .focusBlurActive {
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+  }
+
   .projectAnchor {
     bottom: auto;
     right: auto;
+    transform: translateY(clamp(185px, calc(9vh + 120px), 220px));
   }
 }
 

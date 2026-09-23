@@ -10,9 +10,9 @@ export interface ProjectLayerProps {
 }
 
 /**
- * ProjectLayer — Phase 05 & Phase 06.1
- * Project File Hub centered optically in the Home page.
- * Coordinates optical center placement (z-index: 60) with unclipped overflow.
+ * ProjectLayer — Phase 06.3
+ * Project File Hub positioned optically below central ANSHAD heading (+150px downward).
+ * Coordinates responsive vertical offset (z-index: 60) with unclipped overflow.
  * Smoothly transitions out when navigating toward About.
  */
 export const ProjectLayer: React.FC<ProjectLayerProps> = ({

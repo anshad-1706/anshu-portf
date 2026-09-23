@@ -1,0 +1,323 @@
+/* AnimatedEditorialBackground — Phase 07.1 Reworked Editorial Atmosphere */
+
+.backgroundContainer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+  background-color: #ffffff;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ==========================================================================
+   DEPTH 1: Large Soft Atmospheric Masses (Physical gray fields with grain)
+   ========================================================================== */
+
+.atmosphericMass {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  overflow: hidden;
+  will-change: transform;
+  z-index: 1;
+}
+
+/* 1. Large Atmospheric Mass — Left Edge */
+.massLeft {
+  top: 30%;
+  left: -22vw;
+  width: 58vw;
+  height: 58vw;
+  min-width: 540px;
+  min-height: 540px;
+  max-width: 1080px;
+  max-height: 1080px;
+  background: radial-gradient(
+    circle at 45% 50%,
+    rgba(22, 22, 22, 0.17) 0%,
+    rgba(35, 35, 35, 0.12) 26%,
+    rgba(65, 65, 65, 0.06) 50%,
+    rgba(120, 120, 120, 0.02) 68%,
+    rgba(255, 255, 255, 0) 82%
+  );
+  filter: blur(28px);
+  -webkit-filter: blur(28px);
+  animation: massDriftLeft 34s ease-in-out infinite alternate;
+}
+
+/* 2. Large Atmospheric Mass — Bottom-Right Edge */
+.massBottomRight {
+  bottom: -20vw;
+  right: -16vw;
+  width: 54vw;
+  height: 54vw;
+  min-width: 500px;
+  min-height: 500px;
+  max-width: 980px;
+  max-height: 980px;
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(25, 25, 25, 0.14) 0%,
+    rgba(45, 45, 45, 0.09) 28%,
+    rgba(80, 80, 80, 0.04) 52%,
+    rgba(130, 130, 130, 0.012) 70%,
+    rgba(255, 255, 255, 0) 84%
+  );
+  filter: blur(32px);
+  -webkit-filter: blur(32px);
+  animation: massDriftBottomRight 38s ease-in-out infinite alternate-reverse;
+}
+
+/* Dedicated internal material grain inside the atmospheric masses */
+.massGrain {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0.042;
+  mix-blend-mode: multiply;
+  background-repeat: repeat;
+  background-size: 160px 160px;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='massNoise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23massNoise)'/%3E%3C/svg%3E");
+}
+
+/* ==========================================================================
+   DEPTH 1.5: Small Soft Floating Sphere — Upper Right
+   ========================================================================== */
+
+.floatingSphereUpperRight {
+  position: absolute;
+  top: 14%;
+  right: 14%;
+  width: clamp(75px, 8vw, 115px);
+  height: clamp(75px, 8vw, 115px);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 2;
+  will-change: transform;
+  /* Shaded soft physical sphere with subtle specular / ambient gradient */
+  background: radial-gradient(
+    circle at 35% 35%,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(235, 235, 235, 0.75) 30%,
+    rgba(195, 195, 195, 0.45) 65%,
+    rgba(160, 160, 160, 0.28) 90%,
+    rgba(130, 130, 130, 0.2) 100%
+  );
+  border: 1px solid rgba(0, 0, 0, 0.07);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.035);
+  animation: sphereVerticalFloat 18s ease-in-out infinite alternate;
+}
+
+/* Optional subtle second floating satellite (very small, lower-left periphery) */
+.floatingSphereSubtle {
+  position: absolute;
+  bottom: 22%;
+  left: 9%;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 2;
+  will-change: transform;
+  background: radial-gradient(
+    circle at 38% 38%,
+    rgba(255, 255, 255, 0.9) 0%,
+    rgba(220, 220, 220, 0.35) 60%,
+    rgba(180, 180, 180, 0.18) 100%
+  );
+  border: 1px dashed rgba(0, 0, 0, 0.06);
+  animation: sphereVerticalFloatSecondary 22s ease-in-out infinite alternate;
+}
+
+/* ==========================================================================
+   DEPTH 2 & 3: Thin Orbital Curves (Depth 2) & Dark Orbit Nodes (Depth 3)
+   ========================================================================== */
+
+.orbitalSvg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 3;
+}
+
+/* Major Orbital Lines — Thin, Technical, Asymmetric */
+.orbitCurvePrimary {
+  fill: none;
+  stroke: rgba(0, 0, 0, 0.13);
+  stroke-width: 0.85px;
+  vector-effect: non-scaling-stroke;
+}
+
+.orbitCurveSecondary {
+  fill: none;
+  stroke: rgba(0, 0, 0, 0.11);
+  stroke-width: 0.75px;
+  vector-effect: non-scaling-stroke;
+}
+
+.orbitCurveDashed {
+  fill: none;
+  stroke: rgba(0, 0, 0, 0.11);
+  stroke-width: 0.7px;
+  stroke-dasharray: 6 5;
+  vector-effect: non-scaling-stroke;
+}
+
+.orbitCurveFaint {
+  fill: none;
+  stroke: rgba(0, 0, 0, 0.075);
+  stroke-width: 0.6px;
+  vector-effect: non-scaling-stroke;
+}
+
+/* Depth 3: Black / Graphite Anchor Points (#111111 with controlled visibility) */
+.orbitPointLead {
+  fill: #111111;
+  opacity: 0.88;
+}
+
+.orbitPointSecondary {
+  fill: #111111;
+  opacity: 0.78;
+}
+
+.orbitPointAnchor {
+  fill: #111111;
+  opacity: 0.82;
+}
+
+.orbitPointSubtle {
+  fill: #222222;
+  opacity: 0.65;
+}
+
+/* ==========================================================================
+   Keyframe Animations
+   ========================================================================== */
+
+@keyframes massDriftLeft {
+  0% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  50% {
+    transform: translate(12px, -10px) scale(1.02);
+  }
+  100% {
+    transform: translate(-8px, 8px) scale(0.99);
+  }
+}
+
+@keyframes massDriftBottomRight {
+  0% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  50% {
+    transform: translate(-14px, 8px) scale(1.02);
+  }
+  100% {
+    transform: translate(10px, -12px) scale(0.985);
+  }
+}
+
+@keyframes sphereVerticalFloat {
+  0% {
+    transform: translateY(-8px);
+  }
+  50% {
+    transform: translateY(8px);
+  }
+  100% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes sphereVerticalFloatSecondary {
+  0% {
+    transform: translateY(6px) translateX(-3px);
+  }
+  50% {
+    transform: translateY(-7px) translateX(3px);
+  }
+  100% {
+    transform: translateY(6px) translateX(-3px);
+  }
+}
+
+/* ==========================================================================
+   Responsive Adaptations
+   ========================================================================== */
+
+@media (max-width: 1024px) {
+  .massLeft {
+    width: 68vw;
+    height: 68vw;
+    left: -28vw;
+  }
+
+  .massBottomRight {
+    width: 64vw;
+    height: 64vw;
+    right: -22vw;
+  }
+
+  .floatingSphereSubtle {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .massLeft {
+    width: 82vw;
+    height: 82vw;
+    left: -40vw;
+    top: 36%;
+  }
+
+  .massBottomRight {
+    width: 75vw;
+    height: 75vw;
+    right: -35vw;
+    bottom: -25vw;
+  }
+
+  .floatingSphereUpperRight {
+    width: 65px;
+    height: 65px;
+    right: 8%;
+    top: 12%;
+  }
+
+  .orbitCurveFaint {
+    display: none;
+  }
+
+  .orbitCurvePrimary,
+  .orbitCurveSecondary,
+  .orbitCurveDashed {
+    stroke-width: 0.65px;
+  }
+}
+
+/* ==========================================================================
+   Reduced Motion
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .massLeft,
+  .massBottomRight,
+  .floatingSphereUpperRight,
+  .floatingSphereSubtle {
+    animation: none !important;
+    transform: none !important;
+  }
+}

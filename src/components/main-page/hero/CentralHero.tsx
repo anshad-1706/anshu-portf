@@ -7,9 +7,12 @@ export interface CentralHeroProps {
 }
 
 /**
- * CentralHero — Phase 06
- * The central Home visual containing ANSHAD in Akira Expanded Demo font.
- * Restrained cinematic entrance: opacity 0 -> 1, blur 12px -> 0, scale 0.97 -> 1, translateY 8px -> 0.
+ * CentralHero — Phase 07.2
+ * The central Home visual containing:
+ * Level 1: ANSHAD in Akira Expanded Demo font
+ * Level 2: "Currently an Information Technology Student" editorial subtitle
+ *
+ * Restrained cinematic entrance: opacity 0 -> 1, blur -> 0, translateY 6px -> 0.
  */
 export const CentralHero: React.FC<CentralHeroProps> = ({
   isHomeVisible,
@@ -20,13 +23,22 @@ export const CentralHero: React.FC<CentralHeroProps> = ({
       className={`${styles.heroContainer} ${className}`.trim()}
       aria-label="Anshad — Identity"
     >
-      <h1
-        className={`${styles.nameHeading} ${
-          isHomeVisible ? styles.nameVisible : styles.nameHidden
-        }`}
-      >
-        ANSHAD
-      </h1>
+      <div className={styles.headingAnchor}>
+        <h1
+          className={`${styles.nameHeading} ${
+            isHomeVisible ? styles.nameVisible : styles.nameHidden
+          }`}
+        >
+          ANSHAD
+        </h1>
+        <p
+          className={`${styles.subtitle} ${
+            isHomeVisible ? styles.subtitleVisible : styles.subtitleHidden
+          }`}
+        >
+          Currently an Information Technology Student
+        </p>
+      </div>
     </div>
   );
 };

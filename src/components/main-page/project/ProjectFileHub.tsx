@@ -138,6 +138,16 @@ export const ProjectFileHub: React.FC<ProjectFileHubProps> = ({
           ))}
         </div>
       </FileVisual>
+
+      {/* Contextual Interaction Hint: EXPLORE PROJECTS directly below closed file */}
+      <span
+        className={`${styles.exploreHint} ${
+          isOpen ? styles.exploreHintHidden : styles.exploreHintVisible
+        }`}
+        aria-hidden="true"
+      >
+        EXPLORE PROJECTS
+      </span>
     </div>
   );
 };

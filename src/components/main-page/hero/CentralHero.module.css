@@ -1,4 +1,4 @@
-/* CentralHero — Phase 06 Central Home Visual (ANSHAD Identity) */
+/* CentralHero — Phase 07.2 Central Home Visual (ANSHAD Identity + Subtitle) */
 
 .heroContainer {
   position: relative;
@@ -11,7 +11,19 @@
 }
 
 /* 
- * Main typography identity: ANSHAD in Akira Expanded Demo
+ * Heading Anchor maintains strict optical centering for ANSHAD 
+ * while anchoring the subtitle directly below without shifting ANSHAD's baseline
+ */
+.headingAnchor {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 
+ * Main typography identity: ANSHAD in Akira Expanded Demo (Level 1)
  * Quietly settles into optical center with restrained cinematic easing
  */
 .nameHeading {
@@ -49,10 +61,64 @@
   transform: translateY(0px) scale(1);
 }
 
+/* 
+ * Level 2 Identity Subtitle: "Currently an Information Technology Student"
+ * Restrained editorial caption anchored directly below ANSHAD
+ */
+.subtitle {
+  position: absolute;
+  top: calc(100% + clamp(14px, 2vh, 22px));
+  left: 50%;
+  margin: 0;
+  padding: 0 1rem;
+  font-family: var(--font-editorial, "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  font-size: clamp(0.72rem, 1vw, 0.95rem);
+  font-weight: 450;
+  letter-spacing: 0.035em;
+  line-height: 1.4;
+  color: rgba(20, 20, 20, 0.58);
+  text-align: center;
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+  will-change: opacity, transform, filter;
+  transition:
+    opacity 750ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 750ms cubic-bezier(0.16, 1, 0.3, 1),
+    filter 750ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.subtitleHidden {
+  opacity: 0;
+  filter: blur(8px);
+  transform: translate(-50%, 6px);
+}
+
+.subtitleVisible {
+  opacity: 1;
+  filter: blur(0px);
+  transform: translate(-50%, 0px);
+}
+
+/* Mobile responsive adaptations */
+@media (max-width: 480px) {
+  .subtitle {
+    white-space: normal;
+    width: max-content;
+    max-width: 88vw;
+  }
+}
+
 /* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
-  .nameHeading {
+  .nameHeading,
+  .subtitle {
     transition-duration: 0ms !important;
     filter: none !important;
+    transform: translate(-50%, 0px) !important;
+  }
+
+  .nameHeading {
+    transform: translateY(0px) scale(1) !important;
   }
 }

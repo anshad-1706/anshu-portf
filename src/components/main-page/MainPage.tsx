@@ -5,10 +5,11 @@ import { BackgroundLayer } from "./layers/BackgroundLayer";
 import { AmbientLayer } from "./layers/AmbientLayer";
 import { HeroLayer } from "./layers/HeroLayer";
 import { NavigationLayer } from "./layers/NavigationLayer";
-import { SocialLayer } from "./layers/SocialLayer";
 import { ProjectLayer } from "./layers/ProjectLayer";
 import { FocusBlurLayer } from "./layers/FocusBlurLayer";
 import { CursorLayer } from "./layers/CursorLayer";
+import { HomeStatusIndicator } from "./status";
+import { HomeScrollIndicator } from "./scroll";
 import {
   FORMATION_END_FRAME,
   EXIT_START_FRAME,
@@ -445,8 +446,9 @@ export const MainPage: React.FC<MainPageProps> = ({
         exitProgress={exitProgress}
       />
 
-      {/* 4. Social Layer — Bottom-Left Controls (z-index: 20) */}
-      <SocialLayer />
+      {/* 4. Supporting Micro-Information: Status (bottom-left) & Scroll Hint (bottom-center) (z-index: 25) */}
+      <HomeStatusIndicator isVisible={isHomeVisible && !isAboutActive} />
+      <HomeScrollIndicator isVisible={isHomeVisible && !isAboutActive} />
 
       {/* 5. Navigation Layer — Top-Left Brand & Top-Center Nav (z-index: 40) */}
       <NavigationLayer
