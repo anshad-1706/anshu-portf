@@ -25,9 +25,7 @@ export const HomeScrollIndicator: React.FC<HomeScrollIndicatorProps> = ({
       data-element="home-scroll-indicator"
     >
       <span className={styles.scrollLabel}>SCROLL</span>
-      <div className={styles.scrollLineWrapper}>
-        <div className={styles.scrollLineActive} />
-      </div>
+      <div className={styles.scrollLine} />
     </div>
   );
 };

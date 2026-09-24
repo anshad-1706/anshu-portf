@@ -2,7 +2,7 @@
 
 .scrollContainer {
   position: fixed;
-  bottom: clamp(20px, 3vh, 36px);
+  bottom: clamp(24px, 3.5vh, 38px);
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -14,23 +14,25 @@
   font-family: var(--font-editorial, "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
   z-index: 25;
   transition:
-    opacity 400ms cubic-bezier(0.16, 1, 0.3, 1),
-    visibility 400ms cubic-bezier(0.16, 1, 0.3, 1),
-    transform 400ms cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: opacity, transform;
+    opacity 380ms cubic-bezier(0.16, 1, 0.3, 1),
+    visibility 380ms cubic-bezier(0.16, 1, 0.3, 1),
+    filter 380ms cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, filter;
 }
 
 .scrollVisible {
   opacity: 1;
   visibility: visible;
-  transform: translateX(-50%) translateY(0);
+  filter: blur(0);
+  transition-delay: 680ms;
 }
 
 .scrollHidden {
   opacity: 0;
   visibility: hidden;
-  transform: translateX(-50%) translateY(6px);
+  filter: blur(4px);
   pointer-events: none;
+  transition-delay: 0ms !important;
 }
 
 .scrollLabel {
@@ -42,61 +44,52 @@
   line-height: 1;
 }
 
-/* Thin vertical indicator line */
-.scrollLineWrapper {
-  position: relative;
+/* Very thin vertical indicator line: ~24px height, 1px width, neutral graphite */
+.scrollLine {
   width: 1px;
-  height: 20px;
-  background-color: rgba(0, 0, 0, 0.12);
-  overflow: hidden;
+  height: 24px;
+  background-color: rgba(0, 0, 0, 0.44);
+  will-change: opacity, transform;
+  animation: scrollLineCue 3s ease-in-out infinite;
 }
 
-.scrollLineActive {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.45);
-  animation: linePulse 2.8s ease-in-out infinite;
-  will-change: transform, opacity;
-}
-
-@keyframes linePulse {
+@keyframes scrollLineCue {
   0% {
-    transform: translateY(-100%);
-    opacity: 0.3;
+    opacity: 0.25;
+    transform: translateY(0);
   }
   50% {
-    transform: translateY(0%);
-    opacity: 0.75;
+    opacity: 0.65;
+    transform: translateY(5px);
   }
   100% {
-    transform: translateY(100%);
-    opacity: 0.3;
+    opacity: 0.25;
+    transform: translateY(0);
   }
 }
 
 /* Mobile adjustments */
 @media (max-width: 768px) {
   .scrollContainer {
-    bottom: max(16px, env(safe-area-inset-bottom, 16px));
+    bottom: calc(max(24px, env(safe-area-inset-bottom, 24px)) + 54px);
   }
 
-  .scrollLineWrapper {
-    height: 16px;
+  .scrollLine {
+    height: 18px;
   }
 }
 
 /* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
   .scrollContainer {
-    transition-duration: 0ms !important;
+    transition: none !important;
+    transition-delay: 0ms !important;
+    filter: none !important;
   }
 
-  .scrollLineActive {
+  .scrollLine {
     animation: none !important;
     transform: none !important;
-    opacity: 0.5 !important;
+    opacity: 0.45 !important;
   }
 }

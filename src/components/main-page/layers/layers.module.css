@@ -141,11 +141,17 @@
   justify-content: center;
   pointer-events: auto;
   overflow: visible;
-  /* Desktop responsive optical offset sitting below central ANSHAD (+150px translation) */
-  transform: translateY(clamp(280px, calc(15vh + 150px), 320px));
+  /* Desktop optical offset sitting harmoniously below central ANSHAD (+150px baseline) */
+  transform: translateY(clamp(180px, calc(11vh + 105px), 215px));
 }
 
-/* 8. Cursor Layer */
+/* 8. About Discovery Layer — Phase 01 & 02 Hanging ID Card */
+.aboutDiscoveryLayer {
+  z-index: var(--z-about-discovery, 95);
+  pointer-events: none;
+}
+
+/* 9. Cursor Layer */
 .cursorLayer {
   z-index: var(--z-cursor, 100);
   pointer-events: none;
@@ -154,7 +160,7 @@
 /* Responsive adjustments for tablet viewports */
 @media (max-width: 1024px) {
   .projectAnchor {
-    transform: translateY(clamp(240px, calc(11vh + 150px), 275px));
+    transform: translateY(clamp(160px, calc(9vh + 90px), 190px));
   }
 }
 
@@ -184,7 +190,7 @@
   .projectAnchor {
     bottom: auto;
     right: auto;
-    transform: translateY(clamp(185px, calc(9vh + 120px), 220px));
+    transform: translateY(clamp(135px, calc(7vh + 85px), 165px));
   }
 }
 

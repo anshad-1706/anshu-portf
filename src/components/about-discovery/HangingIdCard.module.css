@@ -1,0 +1,424 @@
+/* Hanging ID Card — Phase 01 Correction & Phase 02 Centering & Discovery */
+
+.aboutDiscoveryWrapper {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+}
+
+/* Background Focus Layer — Dimmed and blurred backdrop behind centered card */
+.focusBackdrop {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  background-color: rgba(6, 6, 8, 0.65);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 740ms cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 68;
+}
+
+.focusBackdrop.isVisible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Top-Left Hanging Anchor */
+.hangingAnchor {
+  position: absolute;
+  top: 0;
+  left: clamp(24px, 3.5vw, 48px);
+  z-index: 70;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Positionable & Draggable Card Container */
+.cardMover {
+  position: relative;
+  width: 170px;
+  height: 250px;
+  pointer-events: auto;
+  will-change: transform, opacity;
+  transition: opacity 450ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hangingCard {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(175deg, #ffffff 0%, #f7f7f9 100%);
+  border-radius: 10px;
+  box-shadow:
+    0 16px 36px rgba(0, 0, 0, 0.12),
+    0 4px 10px rgba(0, 0, 0, 0.05),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.07);
+  pointer-events: auto;
+  cursor: grab;
+  touch-action: none;
+  transform-origin: 50% 0%;
+  outline: none;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: box-shadow 740ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hangingCard:focus-visible {
+  box-shadow:
+    0 16px 36px rgba(0, 0, 0, 0.12),
+    0 4px 10px rgba(0, 0, 0, 0.05),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.07),
+    0 0 0 2px #000000;
+}
+
+.hangingCard.isDragging {
+  cursor: grabbing;
+}
+
+/* Enhanced tactile presence and focal depth in centered state */
+.hangingCard.isCenteredCard {
+  box-shadow:
+    0 32px 80px rgba(0, 0, 0, 0.42),
+    0 12px 30px rgba(0, 0, 0, 0.24),
+    0 2px 6px rgba(0, 0, 0, 0.12),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.28);
+}
+
+/* Physical Lanyard Strap extending offscreen above the viewport */
+.strap {
+  position: absolute;
+  top: -46px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 14px;
+  height: 52px;
+  background: #18181b;
+  border-radius: 2px 2px 0 0;
+  box-shadow:
+    inset -1px 0 0 rgba(255, 255, 255, 0.15),
+    inset 1px 0 0 rgba(0, 0, 0, 0.3),
+    0 2px 6px rgba(0, 0, 0, 0.2);
+  z-index: 10;
+  pointer-events: none;
+  transition: opacity 450ms cubic-bezier(0.16, 1, 0.3, 1) 120ms;
+}
+
+.strap.isCentering {
+  opacity: 0;
+}
+
+/* Metallic clip attached to lanyard and card slot */
+.clasp {
+  position: absolute;
+  top: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 18px;
+  height: 10px;
+  background: linear-gradient(180deg, #8e8e93 0%, #48484a 100%);
+  border-radius: 3px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  z-index: 11;
+  pointer-events: none;
+  transition: opacity 450ms cubic-bezier(0.16, 1, 0.3, 1) 120ms;
+}
+
+.clasp.isCentering {
+  opacity: 0;
+}
+
+/* Punch hole slot on the ID card */
+.punchHole {
+  position: relative;
+  width: 26px;
+  height: 6px;
+  background: #2c2c2e;
+  border-radius: 3px;
+  margin: 10px auto 4px;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.6);
+  flex-shrink: 0;
+}
+
+/* Top header band */
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2px 14px 6px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  flex-shrink: 0;
+}
+
+.cardHeaderTag {
+  font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  font-size: 7.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  color: #666666;
+  text-transform: uppercase;
+}
+
+.cardHeaderSerial {
+  font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  font-size: 7.5px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  color: #999999;
+}
+
+/* Card Body */
+.cardBody {
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  justify-content: space-between;
+}
+
+/* Portrait Placeholder */
+.photoPlaceholder {
+  position: relative;
+  width: 100%;
+  height: 94px;
+  background: #f0f0f3;
+  border-radius: 5px;
+  border: 1px dashed rgba(0, 0, 0, 0.14);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  overflow: hidden;
+}
+
+.photoIcon {
+  width: 22px;
+  height: 22px;
+  stroke: rgba(0, 0, 0, 0.35);
+  fill: none;
+}
+
+.photoPlaceholderText {
+  font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  font-size: 7px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: rgba(0, 0, 0, 0.4);
+  text-transform: uppercase;
+}
+
+/* Identity Info */
+.infoGroup {
+  margin-top: 6px;
+}
+
+.name {
+  font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #111111;
+  text-transform: uppercase;
+  margin: 0 0 2px 0;
+}
+
+.role {
+  font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  font-size: 7.5px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  color: #666666;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+/* Barcode & Footer */
+.cardFooter {
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  padding-top: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.barcodeStripes {
+  display: flex;
+  align-items: flex-end;
+  gap: 1.5px;
+  height: 14px;
+}
+
+.stripe {
+  background: #222222;
+  height: 100%;
+}
+
+.footerCode {
+  font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  font-size: 6.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: #777777;
+}
+
+/* Instruction Prompt below the visible teaser */
+.instructionContainer {
+  position: absolute;
+  top: calc(100% + 12px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  pointer-events: none;
+  white-space: nowrap;
+  transition: opacity 280ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.instructionText {
+  font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  color: #4b4b4e;
+  text-transform: uppercase;
+}
+
+.instructionArrow {
+  width: 10px;
+  height: 10px;
+  stroke: #4b4b4e;
+  fill: none;
+  animation: gentlePulse 2.4s ease-in-out infinite;
+}
+
+@keyframes gentlePulse {
+  0%, 100% {
+    transform: translateY(0);
+    opacity: 0.7;
+  }
+  50% {
+    transform: translateY(3px);
+    opacity: 1;
+  }
+}
+
+/* KNOW MORE ABOUT ME — Centered Call To Action */
+.ctaContainer {
+  position: absolute;
+  top: calc(100% + 22px);
+  left: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 75;
+  pointer-events: auto;
+  opacity: 0;
+  filter: blur(6px);
+  transform: translate(-50%, 8px);
+  transition:
+    opacity 500ms cubic-bezier(0.16, 1, 0.3, 1),
+    filter 500ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 500ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ctaContainer.isCtaVisible {
+  opacity: 1;
+  filter: blur(0px);
+  transform: translate(-50%, 0px);
+}
+
+.ctaButton {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 999px;
+  padding: 10px 24px;
+  font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  color: #ffffff;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+  outline: none;
+  white-space: nowrap;
+  transition:
+    background-color 220ms ease,
+    border-color 220ms ease,
+    box-shadow 220ms ease,
+    transform 220ms ease;
+}
+
+.ctaButton:hover {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+}
+
+.ctaButton:focus-visible {
+  border-color: #ffffff;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5);
+}
+
+/* Responsive for Mobile */
+@media (max-width: 768px) {
+  .hangingAnchor {
+    left: 16px;
+  }
+
+  .cardMover {
+    width: 142px;
+    height: 215px;
+  }
+
+  .photoPlaceholder {
+    height: 76px;
+  }
+
+  .name {
+    font-size: 10px;
+  }
+
+  .role {
+    font-size: 7px;
+  }
+
+  .instructionText {
+    font-size: 8.5px;
+  }
+
+  .ctaButton {
+    font-size: 9.5px;
+    padding: 8px 18px;
+    letter-spacing: 0.14em;
+  }
+}
+
+/* Reduced Motion Override */
+@media (prefers-reduced-motion: reduce) {
+  .instructionArrow {
+    animation: none !important;
+  }
+  .focusBackdrop {
+    transition-duration: 0.01ms !important;
+  }
+  .cardMover {
+    transition-duration: 0.01ms !important;
+  }
+  .ctaContainer {
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -22,6 +22,7 @@
   opacity: 1;
   visibility: visible;
   transform: translateY(0);
+  transition-delay: 580ms;
 }
 
 .statusHidden {
@@ -29,6 +30,7 @@
   visibility: hidden;
   transform: translateY(6px);
   pointer-events: none;
+  transition-delay: 0ms !important;
 }
 
 /* Primary Line: ● CURRENTLY BUILDING */
@@ -73,7 +75,7 @@
     opacity: 0.45;
   }
   50% {
-    opacity: 0.9;
+    opacity: 0.85;
   }
   100% {
     opacity: 0.45;
@@ -83,7 +85,7 @@
 /* Mobile responsive positioning with safe-area insets */
 @media (max-width: 768px) {
   .statusContainer {
-    bottom: max(20px, env(safe-area-inset-bottom, 20px));
+    bottom: calc(max(20px, env(safe-area-inset-bottom, 20px)) + 58px);
     left: max(16px, env(safe-area-inset-left, 16px));
   }
 
@@ -102,6 +104,7 @@
 @media (prefers-reduced-motion: reduce) {
   .statusContainer {
     transition-duration: 0ms !important;
+    transition-delay: 0ms !important;
     transform: none !important;
   }
 

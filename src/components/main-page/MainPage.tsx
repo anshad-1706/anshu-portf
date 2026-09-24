@@ -8,6 +8,7 @@ import { NavigationLayer } from "./layers/NavigationLayer";
 import { ProjectLayer } from "./layers/ProjectLayer";
 import { FocusBlurLayer } from "./layers/FocusBlurLayer";
 import { CursorLayer } from "./layers/CursorLayer";
+import { AboutDiscoveryLayer } from "./layers/AboutDiscoveryLayer";
 import { HomeStatusIndicator } from "./status";
 import { HomeScrollIndicator } from "./scroll";
 import {
@@ -21,11 +22,13 @@ export interface MainPageProps {
   className?: string;
   isNavActive?: boolean;
   isIntroCompleted?: boolean;
+  onHomeActiveChange?: (isActive: boolean) => void;
 }
 
 type SequenceState =
   | "intro"
   | "waiting_for_home"
+  | "home_entering"
   | "home"
   | "forming_about"
   | "about_held"
@@ -33,37 +36,65 @@ type SequenceState =
   | "about_complete";
 
 /**
- * MainPage — Phase 06 Architectural Correction
+ * MainPage — Phase 07.5 Architectural Correction: Unified First-Scroll Home Reveal
  *
  * Sequence:
- * 1. Intro completes -> waiting_for_home (Home UI mounted, ANSHAD waiting)
- * 2. First downward scroll -> HOME activates, ANSHAD reveals quietly in center
- * 3. User scrolls toward ABOUT -> ANSHAD fades, portrait forms (01 -> 76), holds frame 76
- * 4. User continues scrolling -> portrait exits (77 -> 130), About Me fully establishes
- * 5. Reverse scrolling naturally reverses back to frame 76 and back to HOME
+ * 1. Intro completes -> waiting_for_home (Clean canvas, waiting for first interaction)
+ * 2. First downward scroll -> HOME_ENTERING (triggers one coordinated cinematic timeline)
+ *    T+0ms: Background, FloatingNav, FloatingContactNav enter
+ *    T+120ms: ANSHAD enters
+ *    T+280ms: Subtitle enters
+ *    T+380ms: ProjectFileHub enters
+ *    T+520ms: EXPLORE PROJECTS settles
+ *    T+580ms: CURRENTLY BUILDING enters
+ *    T+680ms: Home SCROLL indicator enters
+ *    T+950ms: Complete Home state is settled -> HOME_STABLE (home)
+ * 3. Subsequent downward scroll -> transitions toward ABOUT
  */
 export const MainPage: React.FC<MainPageProps> = ({
   className = "",
   isNavActive,
   isIntroCompleted = false,
+  onHomeActiveChange,
 }) => {
   // Visual states
-  const [isHomeVisible, setIsHomeVisible] = useState<boolean>(false);
+  const [isHomeVisible, setIsHomeVisible] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      return params.has("skipIntro") || window.location.hash === "#home";
+    }
+    return false;
+  });
   const [isAboutActive, setIsAboutActive] = useState<boolean>(false);
   const [currentFrame, setCurrentFrame] = useState<number>(1);
   const [exitProgress, setExitProgress] = useState<number>(0);
   const [activeNavId, setActiveNavId] = useState<string>("home");
   const [isProjectHubOpen, setIsProjectHubOpen] = useState<boolean>(false);
+  const [isHomeStable, setIsHomeStable] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      return params.has("skipIntro") || window.location.hash === "#home";
+    }
+    return false;
+  });
+  const [forceIdCardTeaser, setForceIdCardTeaser] = useState<boolean>(false);
 
   // State refs to ensure atomic gesture handling without stale closures
   const stateRef = useRef<SequenceState>(
-    isIntroCompleted ? "waiting_for_home" : "intro"
+    (() => {
+      if (typeof window !== "undefined") {
+        const params = new URLSearchParams(window.location.search);
+        if (params.has("skipIntro") || window.location.hash === "#home") return "home";
+      }
+      return isIntroCompleted ? "waiting_for_home" : "intro";
+    })()
   );
   const frameRef = useRef<number>(1);
   const targetProgressRef = useRef<number>(0);
   const currentProgressRef = useRef<number>(0);
   const formationRafRef = useRef<number | null>(null);
   const exitRafRef = useRef<number | null>(null);
+  const homeEnteringTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const shouldReduceMotion = useReducedMotion() ?? false;
 
   // Sync introCompleted state changes from App.tsx
@@ -78,16 +109,37 @@ export const MainPage: React.FC<MainPageProps> = ({
     portraitPreloader.loadInitialBatch();
   }, []);
 
-  // 1. Transition into HOME (First scroll after Intro)
+  // 1. Transition into HOME (First scroll after Intro triggers unified cinematic entrance)
   const transitionToHome = useCallback(() => {
     if (stateRef.current !== "waiting_for_home") return;
-    stateRef.current = "home";
+    stateRef.current = "home_entering";
     setIsHomeVisible(true);
     setIsAboutActive(false);
     setActiveNavId("home");
-  }, []);
+    onHomeActiveChange?.(true);
+
+    if (shouldReduceMotion) {
+      stateRef.current = "home";
+      setIsHomeStable(true);
+      return;
+    }
+
+    if (homeEnteringTimerRef.current) {
+      clearTimeout(homeEnteringTimerRef.current);
+    }
+
+    // Coordinated cinematic entrance settles in ~950ms (transition to HOME_STABLE)
+    homeEnteringTimerRef.current = setTimeout(() => {
+      if (stateRef.current === "home_entering") {
+        stateRef.current = "home";
+        setIsHomeStable(true);
+      }
+      homeEnteringTimerRef.current = null;
+    }, 950);
+  }, [onHomeActiveChange, shouldReduceMotion]);
 
   // 2. Start About portrait formation animation (frames 01 -> 76)
+  // Preserved for Phase 02/03 when ID card fully reveals About
   const startAboutFormation = useCallback(() => {
     if (stateRef.current !== "home") return;
     stateRef.current = "forming_about";
@@ -95,6 +147,7 @@ export const MainPage: React.FC<MainPageProps> = ({
     // ANSHAD fades out, portrait sequence appears
     setIsHomeVisible(false);
     setIsAboutActive(true);
+    setIsHomeStable(false);
     setActiveNavId("about");
 
     // Start preloading formation batch
@@ -146,6 +199,10 @@ export const MainPage: React.FC<MainPageProps> = ({
       cancelAnimationFrame(exitRafRef.current);
       exitRafRef.current = null;
     }
+    if (homeEnteringTimerRef.current) {
+      clearTimeout(homeEnteringTimerRef.current);
+      homeEnteringTimerRef.current = null;
+    }
 
     targetProgressRef.current = 0;
     currentProgressRef.current = 0;
@@ -155,9 +212,11 @@ export const MainPage: React.FC<MainPageProps> = ({
 
     setIsAboutActive(false);
     setIsHomeVisible(true);
+    setIsHomeStable(true);
     setActiveNavId("home");
+    onHomeActiveChange?.(true);
     stateRef.current = "home";
-  }, []);
+  }, [onHomeActiveChange]);
 
   // 4. Smooth exit progress interpolation loop for frames 77 -> 130
   const startExitLoop = useCallback(() => {
@@ -256,28 +315,31 @@ export const MainPage: React.FC<MainPageProps> = ({
         return;
       }
 
-      // 2. In HOME:
+      // 2. In HOME_ENTERING: absorb input during cinematic entrance (~950ms)
+      if (currentState === "home_entering") {
+        e.preventDefault();
+        return;
+      }
+
+      // 3. In HOME (HOME_STABLE):
       if (currentState === "home") {
         if (e.deltaY < 0) {
           // At top of Home, prevent scrolling above/replaying intro
           e.preventDefault();
           return;
         }
-        if (e.deltaY > 8) {
-          // Scroll down from Home triggers About transition
-          e.preventDefault();
-          startAboutFormation();
-        }
+        // Phase 01: Normal downward scroll on Home does not trigger About transition directly.
+        // Preserves the ID card discovery requirement.
         return;
       }
 
-      // 3. In FORMING_ABOUT: input locked during automatic 01 -> 76 formation
+      // 4. In FORMING_ABOUT: input locked during automatic 01 -> 76 formation
       if (currentState === "forming_about") {
         e.preventDefault();
         return;
       }
 
-      // 4. In ABOUT_HELD:
+      // 5. In ABOUT_HELD:
       if (currentState === "about_held") {
         if (e.deltaY < -15) {
           // Scrolling up from frame 76 returns cleanly to HOME
@@ -297,7 +359,7 @@ export const MainPage: React.FC<MainPageProps> = ({
         return;
       }
 
-      // 5. In ABOUT_EXITING or ABOUT_COMPLETE:
+      // 6. In ABOUT_EXITING or ABOUT_COMPLETE:
       if (currentState === "about_exiting" || currentState === "about_complete") {
         e.preventDefault();
         const deltaNormalized = e.deltaY / 750;
@@ -338,16 +400,17 @@ export const MainPage: React.FC<MainPageProps> = ({
         return;
       }
 
+      if (currentState === "home_entering") {
+        if (e.cancelable) e.preventDefault();
+        return;
+      }
+
       if (currentState === "home") {
         if (deltaY < -5) {
           if (e.cancelable) e.preventDefault();
           return;
         }
-        if (deltaY > 15) {
-          if (e.cancelable) e.preventDefault();
-          touchStartY = currentY;
-          startAboutFormation();
-        }
+        // Phase 01: Normal touch scroll on Home does not trigger About transition directly
         return;
       }
 
@@ -394,16 +457,28 @@ export const MainPage: React.FC<MainPageProps> = ({
       }
     };
 
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (stateRef.current === "waiting_for_home") {
+        if (["ArrowDown", "PageDown", " ", "Spacebar"].includes(e.key)) {
+          e.preventDefault();
+          transitionToHome();
+        }
+      }
+    };
+
     window.addEventListener("wheel", handleWheel, { passive: false });
     window.addEventListener("touchstart", handleTouchStart, { passive: true });
     window.addEventListener("touchmove", handleTouchMove, { passive: false });
+    window.addEventListener("keydown", handleKeyDown);
 
     return () => {
       window.removeEventListener("wheel", handleWheel);
       window.removeEventListener("touchstart", handleTouchStart);
       window.removeEventListener("touchmove", handleTouchMove);
+      window.removeEventListener("keydown", handleKeyDown);
       if (formationRafRef.current) cancelAnimationFrame(formationRafRef.current);
       if (exitRafRef.current) cancelAnimationFrame(exitRafRef.current);
+      if (homeEnteringTimerRef.current) clearTimeout(homeEnteringTimerRef.current);
     };
   }, [
     isIntroCompleted,
@@ -413,18 +488,22 @@ export const MainPage: React.FC<MainPageProps> = ({
     startExitLoop,
   ]);
 
+  // Triggered when user clicks "KNOW MORE ABOUT ME" on the centered ID card
+  const handleAboutRequested = useCallback(() => {
+    startAboutFormation();
+  }, [startAboutFormation]);
+
   // Handle direct navigation selection (clicking Home, Work, About in navbar)
   const handleNavSelect = useCallback(
     (id: string) => {
       if (id === "home" || id === "work") {
         returnToHome();
       } else if (id === "about") {
-        if (stateRef.current === "waiting_for_home" || stateRef.current === "home") {
-          startAboutFormation();
-        }
+        // ABOUT in FloatingNav routes to the ID card discovery teaser / centering
+        setForceIdCardTeaser(true);
       }
     },
-    [returnToHome, startAboutFormation]
+    [returnToHome]
   );
 
   return (
@@ -433,7 +512,7 @@ export const MainPage: React.FC<MainPageProps> = ({
       aria-label="Main Portfolio Experience"
     >
       {/* 1. Background Canvas Layer (z-index: 1) */}
-      <BackgroundLayer />
+      <BackgroundLayer isHomeVisible={isHomeVisible || isAboutActive} />
 
       {/* 2. Ambient Atmosphere Layer (z-index: 2) */}
       <AmbientLayer />
@@ -466,7 +545,15 @@ export const MainPage: React.FC<MainPageProps> = ({
         onOpenChange={setIsProjectHubOpen}
       />
 
-      {/* 8. Cursor Layer (z-index: 100) */}
+      {/* 8. About Discovery Layer — Hanging ID Card Pull-Down Entry (z-index: 70) */}
+      <AboutDiscoveryLayer
+        isHomeStable={isHomeStable}
+        isAboutActive={isAboutActive}
+        forceTrigger={forceIdCardTeaser}
+        onAboutRequested={handleAboutRequested}
+      />
+
+      {/* 9. Cursor Layer (z-index: 100) */}
       <CursorLayer />
     </section>
   );

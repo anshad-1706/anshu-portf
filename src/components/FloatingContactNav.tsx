@@ -200,8 +200,8 @@ export const FloatingContactNav: React.FC<FloatingContactNavProps> = ({
       x: 0,
       transition: {
         duration: 0.52,
-        // 320ms intentional pure-white silence + quick 120ms staggered emergence
-        delay: 0.32 + customIndex * 0.12,
+        // T+0ms coordinated Home entrance timeline with subtle 80ms stagger per button
+        delay: shouldReduceMotion ? 0 : customIndex * 0.08,
         ease: EDITORIAL_EASE,
       },
     }),

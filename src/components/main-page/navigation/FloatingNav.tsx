@@ -143,8 +143,8 @@ export const FloatingNav: React.FC<FloatingNavProps> = ({
       pointerEvents: "auto" as const,
       transition: {
         duration: 0.52,
-        // 320ms intentional silence matching FloatingContactNav
-        delay: shouldReduceMotion ? 0 : 0.32,
+        // T+0ms coordinated Home entrance timeline
+        delay: 0,
         ease: EDITORIAL_EASE,
       },
     },

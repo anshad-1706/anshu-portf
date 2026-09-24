@@ -1,4 +1,5 @@
 import React from "react";
+import { useReducedMotion } from "framer-motion";
 import styles from "./layers.module.css";
 import { ProjectFileHub } from "../project";
 
@@ -10,10 +11,10 @@ export interface ProjectLayerProps {
 }
 
 /**
- * ProjectLayer — Phase 06.3
+ * ProjectLayer — Phase 06.3 / Phase 07.5
  * Project File Hub positioned optically below central ANSHAD heading (+150px downward).
  * Coordinates responsive vertical offset (z-index: 60) with unclipped overflow.
- * Smoothly transitions out when navigating toward About.
+ * Synchronized to enter at T+380ms during the unified first-scroll Home reveal.
  */
 export const ProjectLayer: React.FC<ProjectLayerProps> = ({
   children,
@@ -21,6 +22,8 @@ export const ProjectLayer: React.FC<ProjectLayerProps> = ({
   isHomeVisible = true,
   onOpenChange,
 }) => {
+  const shouldReduceMotion = useReducedMotion() ?? false;
+
   return (
     <div
       className={`${styles.layerBase} ${styles.projectLayer} ${className}`.trim()}
@@ -28,12 +31,18 @@ export const ProjectLayer: React.FC<ProjectLayerProps> = ({
       style={{
         opacity: isHomeVisible ? 1 : 0,
         visibility: isHomeVisible ? "visible" : "hidden",
-        pointerEvents: isHomeVisible ? "auto" : "none",
-        transition:
-          "opacity 450ms cubic-bezier(0.16, 1, 0.3, 1), visibility 450ms",
+        pointerEvents: "none",
+        transition: shouldReduceMotion
+          ? "none"
+          : "opacity 500ms cubic-bezier(0.16, 1, 0.3, 1), visibility 500ms",
+        transitionDelay: shouldReduceMotion || !isHomeVisible ? "0ms" : "380ms",
       }}
     >
-      <div className={styles.projectAnchor} data-anchor="project">
+      <div
+        className={styles.projectAnchor}
+        data-anchor="project"
+        style={{ pointerEvents: isHomeVisible ? "auto" : "none" }}
+      >
         {children || <ProjectFileHub onOpenChange={onOpenChange} />}
       </div>
     </div>
