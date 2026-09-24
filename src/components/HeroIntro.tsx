@@ -8,6 +8,7 @@ import {
   type Variants,
 } from "framer-motion";
 import styles from "./HeroIntro.module.css";
+import { IntroScrollIndicator } from "./hero-intro";
 
 const HERO_LETTERS = ["A", "N", "S", "H", "A", "D"] as const;
 
@@ -136,6 +137,7 @@ export const HeroIntro: React.FC<HeroIntroProps> = ({
   const containerRef = useRef<HTMLElement>(null);
   const [isEntranceComplete, setIsEntranceComplete] = useState(false);
   const [hasCompleted, setHasCompleted] = useState(false);
+  const [hasScrolled, setHasScrolled] = useState(false);
   const shouldReduceMotion = useReducedMotion() ?? false;
 
   // Guarantee page starts at top and locks scroll during the 2.7s entrance reveal
@@ -167,10 +169,16 @@ export const HeroIntro: React.FC<HeroIntroProps> = ({
     offset: ["start start", "end end"],
   });
 
-  // Scene 04 trigger: once Paragraph 03 has completely transitioned away (>= 0.98)
+  // Scene 04 trigger & scroll detection for IntroScrollIndicator exit
   // STRICT REQUIREMENT: One-way trigger. Never reversible once completed.
   useEffect(() => {
     const handleProgress = (latest: number) => {
+      if (latest > 0.01) {
+        setHasScrolled(true);
+      } else if (latest <= 0.002) {
+        setHasScrolled(false);
+      }
+
       if (hasCompleted || isLocked) return;
       if (latest >= 0.98) {
         setHasCompleted(true);
@@ -338,6 +346,12 @@ export const HeroIntro: React.FC<HeroIntroProps> = ({
       <div className={styles.stickyViewport}>
         {/* Layer 0: Subtle pale-blue corner atmosphere */}
         <div className={styles.cornerAtmosphere} aria-hidden="true" />
+
+        {/* Intro Scroll Down Interaction Indicator */}
+        <IntroScrollIndicator
+          isVisible={isEntranceComplete && !hasScrolled}
+          hasScrolled={hasScrolled}
+        />
 
         {/* Layer 1: Atmospheric Typographic Shadow of ANSHAD */}
         <motion.div

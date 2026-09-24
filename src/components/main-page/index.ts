@@ -9,3 +9,6 @@ export { FocusBlurLayer } from "./layers/FocusBlurLayer";
 export { CursorLayer } from "./layers/CursorLayer";
 export { SocialControls } from "./social";
 export { ProjectFileHub, ProjectCard } from "./project";
+export { AnimatedEditorialBackground } from "./background";
+export { HomeStatusIndicator } from "./status";
+export { HomeScrollIndicator } from "./scroll";

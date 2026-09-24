@@ -119,6 +119,16 @@ export const ProjectFileHub: React.FC<ProjectFileHubProps> = ({
       {/* Invisible proximity & complete active interaction area */}
       <div className={styles.hitArea} aria-hidden="true" />
 
+      {/* Editorial Constellation Heading: BUILT BY ME directly above open project cards */}
+      <span
+        className={`${styles.constellationHeading} ${
+          isOpen ? styles.headingVisible : styles.headingHidden
+        }`}
+        aria-hidden={!isOpen}
+      >
+        BUILT BY ME
+      </span>
+
       {/* Physical 3D File Visual Anchor hosting the 3 primary project cards */}
       <FileVisual
         ref={fileRef}
@@ -138,6 +148,16 @@ export const ProjectFileHub: React.FC<ProjectFileHubProps> = ({
           ))}
         </div>
       </FileVisual>
+
+      {/* Contextual Interaction Hint: EXPLORE PROJECTS directly below closed file */}
+      <span
+        className={`${styles.exploreHint} ${
+          isOpen ? styles.exploreHintHidden : styles.exploreHintVisible
+        }`}
+        aria-hidden="true"
+      >
+        EXPLORE PROJECTS
+      </span>
     </div>
   );
 };
