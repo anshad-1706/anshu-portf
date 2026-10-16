@@ -98,8 +98,11 @@ export const FloatingNav: React.FC<FloatingNavProps> = ({
     };
   }, [isRevealedProp]);
 
-  const handleItemClick = (id: string) => {
-    setInternalActiveId(id);
+  const handleItemClick = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
+    e.preventDefault();
+    if (activeIdProp === undefined) {
+      setInternalActiveId(id);
+    }
     onSelect?.(id);
   };
 
@@ -108,7 +111,10 @@ export const FloatingNav: React.FC<FloatingNavProps> = ({
     id: string
   ) => {
     if (e.key === "Enter" || e.key === " ") {
-      setInternalActiveId(id);
+      e.preventDefault();
+      if (activeIdProp === undefined) {
+        setInternalActiveId(id);
+      }
       onSelect?.(id);
     }
   };
@@ -171,7 +177,7 @@ export const FloatingNav: React.FC<FloatingNavProps> = ({
               <a
                 href={item.href}
                 className={`${styles.navLink} ${isActive ? styles.active : ""}`}
-                onClick={() => handleItemClick(item.id)}
+                onClick={(e) => handleItemClick(e, item.id)}
                 onKeyDown={(e) => handleKeyDown(e, item.id)}
                 onPointerMove={handlePointerMove}
                 aria-current={isActive ? "page" : undefined}

@@ -1,0 +1,436 @@
+/* JourneyStop — Phase 03.1.1 Collapsed default state + hover preview + Genie trigger */
+
+.stopContainer {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  pointer-events: auto;
+  user-select: none;
+  outline: none;
+  transition:
+    opacity 400ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 400ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Stop Marker — positioned on the curved road axis */
+.markerWrapper {
+  position: absolute;
+  left: 50%;
+  top: 16px;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.markerDot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow:
+    0 0 14px rgba(255, 255, 255, 0.8),
+    0 0 28px rgba(255, 255, 255, 0.3);
+  transition: transform 350ms ease, box-shadow 350ms ease;
+}
+
+.markerRing {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  animation: pulseRing 3s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+}
+
+@keyframes pulseRing {
+  0% {
+    transform: scale(0.85);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 0.2;
+  }
+  100% {
+    transform: scale(0.85);
+    opacity: 0.8;
+  }
+}
+
+/* Subtle connector link between road marker and title badge */
+.connectorLine {
+  position: absolute;
+  top: 16px;
+  right: calc(50% + 10px);
+  width: 14px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.25);
+  pointer-events: none;
+  z-index: 4;
+}
+
+/* Interactive Hit Wrapper — Positioned to the LEFT of the road on desktop */
+.interactiveWrapper {
+  position: absolute;
+  right: calc(50% + 22px);
+  left: auto;
+  top: 0;
+  max-width: clamp(280px, 30vw, 380px);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  padding: 0;
+  z-index: 6;
+  pointer-events: auto;
+}
+
+/* Stop Title Area — Always visible in default state with tightly scoped contrast */
+.titleArea {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 3px;
+  width: fit-content;
+  padding: 8px 14px;
+  border-radius: 8px;
+  background: rgba(22, 22, 26, 0.88);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.16),
+    0 1px 3px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  outline: none;
+  transition:
+    background-color 250ms ease,
+    border-color 250ms ease,
+    box-shadow 250ms ease,
+    transform 200ms ease;
+  user-select: none;
+}
+
+.titleArea:hover,
+.stopContainer.isRevealed .titleArea {
+  background: rgba(16, 16, 20, 0.95);
+  border-color: rgba(255, 255, 255, 0.22);
+  box-shadow:
+    0 6px 20px rgba(0, 0, 0, 0.24),
+    0 2px 6px rgba(0, 0, 0, 0.12);
+  transform: translateY(-1px);
+}
+
+.titleArea:focus-visible {
+  border-color: #ffffff;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.4);
+}
+
+.metaRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dateTag {
+  font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: rgba(255, 255, 255, 0.72);
+  text-transform: uppercase;
+}
+
+.nodeIndex {
+  font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.48);
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  font-size: clamp(16px, 1.6vw, 20px);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #ffffff;
+  line-height: 1.2;
+  transition: color 250ms ease;
+}
+
+/* Subtle contextual hint badge */
+.exploreHint {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 2px;
+  font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  color: rgba(255, 255, 255, 0.55);
+  text-transform: uppercase;
+  transition: opacity 250ms ease, color 250ms ease;
+}
+
+/* Emerging Compact Details Panel — Positioned to the left of stop, avoiding contact nav */
+.detailsCard {
+  opacity: 0;
+  filter: blur(8px);
+  transform: translateY(8px) scale(0.98);
+  max-height: 0;
+  overflow: hidden;
+  pointer-events: none;
+  padding: 0;
+  width: clamp(280px, 30vw, 380px);
+  background: rgba(14, 14, 17, 0.9);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  box-shadow:
+    0 20px 48px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: left;
+  transition:
+    opacity 450ms cubic-bezier(0.16, 1, 0.3, 1),
+    filter 450ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 450ms cubic-bezier(0.16, 1, 0.3, 1),
+    max-height 450ms cubic-bezier(0.16, 1, 0.3, 1),
+    margin-top 450ms cubic-bezier(0.16, 1, 0.3, 1),
+    padding 450ms cubic-bezier(0.16, 1, 0.3, 1);
+  margin-top: 0;
+}
+
+/* Active / Hovered revealed state */
+.stopContainer.isRevealed .detailsCard {
+  opacity: 1;
+  filter: blur(0px);
+  transform: translateY(0) scale(1);
+  max-height: 480px;
+  padding: 18px 20px;
+  margin-top: 8px;
+  pointer-events: auto;
+  border-color: rgba(255, 255, 255, 0.18);
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.65),
+    0 0 30px rgba(255, 255, 255, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.stopContainer.isRevealed .markerDot {
+  transform: scale(1.3);
+  box-shadow:
+    0 0 18px rgba(255, 255, 255, 1),
+    0 0 36px rgba(255, 255, 255, 0.6);
+}
+
+.stopContainer.isRevealed .exploreHint {
+  opacity: 0.8;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.teaserText {
+  margin: 0;
+  font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  font-size: 11px;
+  font-style: italic;
+  font-weight: 500;
+  color: #ffffff;
+  letter-spacing: 0.01em;
+}
+
+.narrative {
+  margin: 0;
+  font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  font-size: 11.5px;
+  font-weight: 400;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+/* Dynamic preview context footer */
+.previewContext {
+  margin-top: 2px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.previewContextItem {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.contextLabel {
+  font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.45);
+  text-transform: uppercase;
+}
+
+.contextSummary {
+  font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: #e4e4e7;
+  line-height: 1.4;
+}
+
+.contextInstitution {
+  font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: #e4e4e7;
+  text-transform: uppercase;
+}
+
+.contextStatus {
+  font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+}
+
+/* Education / Context Section */
+.educationContext {
+  margin-top: 2px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.educationItem {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.educationInstitution {
+  font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: #e4e4e7;
+  text-transform: uppercase;
+}
+
+.educationDetails {
+  font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+}
+
+/* Action button to open full centered detail view */
+.openDetailAction {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-top: 4px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  color: #ffffff;
+  font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition:
+    background-color 200ms ease,
+    border-color 200ms ease,
+    transform 150ms ease;
+  outline: none;
+}
+
+.openDetailAction:hover {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.28);
+  transform: translateY(-1px);
+}
+
+.openDetailAction:focus-visible {
+  border-color: #ffffff;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.35);
+}
+
+.openDetailIcon {
+  width: 11px;
+  height: 11px;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  transition: transform 200ms ease;
+}
+
+.openDetailAction:hover .openDetailIcon {
+  transform: translate(2px, -2px);
+}
+
+.stopContainer.isApproaching {
+  opacity: 0.65;
+}
+
+.stopContainer.isPassed {
+  opacity: 0.5;
+}
+
+/* Mobile & Small screens (<= 768px): Road is on the left, preview opens to the right */
+@media (max-width: 768px) {
+  .markerWrapper {
+    left: 20px;
+  }
+
+  .connectorLine {
+    left: 28px;
+    right: auto;
+    width: 12px;
+  }
+
+  .interactiveWrapper {
+    position: relative;
+    right: auto;
+    left: 42px;
+    top: 0;
+    margin-left: 0;
+    align-items: flex-start;
+    max-width: calc(100vw - 64px);
+  }
+
+  .detailsCard {
+    width: 100%;
+    max-width: calc(100vw - 64px);
+  }
+
+  .title {
+    font-size: 16px;
+  }
+
+  .narrative {
+    font-size: 11px;
+  }
+}

@@ -3,8 +3,9 @@ import styles from "./FileVisual.module.css";
 
 export interface FileVisualProps {
   isOpen: boolean;
-  onClick?: () => void;
+  onClick?: (e: React.MouseEvent) => void;
   shouldReduceMotion?: boolean;
+  isNavigating?: boolean;
   children?: ReactNode;
 }
 
@@ -15,7 +16,7 @@ export interface FileVisualProps {
  * Depth Order: Floor Shadow (z:1) → Folder Back (z:2) → Sheets (z:3) → Front Pocket (z:5) → Cards Slot (z:8).
  */
 export const FileVisual = forwardRef<HTMLDivElement, FileVisualProps>(
-  ({ isOpen, onClick, children }, ref) => {
+  ({ isOpen, onClick, isNavigating, children }, ref) => {
     // Exact sculpted front pocket contour path
     const pocketPath =
       "M 0,16 Q 0,0 16,0 L 54,0 Q 64,0 70,8 L 76,15 Q 82,21 92,21 L 140,21 Q 156,21 156,36 L 156,70 Q 156,90 136,90 L 20,90 Q 0,90 0,70 Z";
@@ -27,15 +28,15 @@ export const FileVisual = forwardRef<HTMLDivElement, FileVisualProps>(
         ref={ref}
         role="button"
         tabIndex={0}
-        className={`${styles.fileVisualContainer} ${isOpen ? `fileOpen ${styles.fileOpen} ${styles.isOpen}` : ""}`}
+        className={`${styles.fileVisualContainer} ${isOpen ? `fileOpen ${styles.fileOpen} ${styles.isOpen}` : ""} ${isNavigating ? styles.isNavigating : ""}`.trim()}
         onClick={onClick}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
-            onClick?.();
+            onClick?.(e as unknown as React.MouseEvent);
           }
         }}
-        aria-label={isOpen ? "Close Project File" : "Open Project File"}
+        aria-label={isOpen ? "View Projects archive" : "Open Project File"}
         aria-expanded={isOpen}
       >
         {/* 1. Floor Drop Shadow (z-index: 1) */}

@@ -1,0 +1,239 @@
+/* JourneyRoad — Cinematic curved road system */
+
+.roadViewport {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  pointer-events: auto;
+  /* Leaves generous breathing room for the right-side FloatingContactNav */
+  padding-right: clamp(40px, 5vw, 84px);
+}
+
+/* Header indicator at top right */
+.journeyHeader {
+  position: absolute;
+  top: clamp(24px, 3vh, 48px);
+  right: clamp(24px, 3vw, 48px);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.journeyHeaderTag {
+  font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: rgba(255, 255, 255, 0.4);
+  text-transform: uppercase;
+}
+
+.journeyHeaderLine {
+  width: 24px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Moving Road Container — translates based on scroll progress */
+.roadTrack {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  will-change: transform;
+}
+
+/* SVG Path Layer */
+.svgLayer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4400px;
+  pointer-events: none;
+  overflow: visible;
+}
+
+/* Atmospheric road glow & depth filters */
+.roadAtmosphere {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 160px;
+  height: 4400px;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255, 255, 255, 0.04) 0%,
+    rgba(20, 20, 24, 0) 70%
+  );
+  filter: blur(30px);
+  pointer-events: none;
+}
+
+/* Stops container placed over the track */
+.stopsContainer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4400px;
+  pointer-events: none;
+}
+
+/* Terminal Return Home Node at end of journey */
+.terminalNode {
+  position: absolute;
+  left: 50%;
+  top: 4180px;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  pointer-events: auto;
+  z-index: 10;
+}
+
+.terminalMarker {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow:
+    0 0 16px rgba(255, 255, 255, 0.9),
+    0 0 32px rgba(255, 255, 255, 0.4);
+}
+
+.terminalButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 8px;
+  background: rgba(18, 18, 22, 0.92);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+  font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  transition:
+    background-color 200ms ease,
+    border-color 200ms ease,
+    transform 200ms ease,
+    box-shadow 200ms ease;
+}
+
+.terminalButton:hover {
+  background: rgba(26, 26, 32, 0.98);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.55),
+    0 0 20px rgba(255, 255, 255, 0.1);
+}
+
+.terminalButton:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 3px;
+}
+
+.terminalIcon {
+  width: 13px;
+  height: 13px;
+  stroke: currentColor;
+  stroke-width: 2.2;
+}
+
+
+/* Scroll hint indicator beside the road on the right (FIX 05) */
+.scrollHint {
+  position: absolute;
+  bottom: clamp(32px, 4.5vh, 48px);
+  right: clamp(24px, 3.5vw, 48px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+  opacity: 0.88;
+  transition: opacity 300ms ease;
+  z-index: 25;
+}
+
+.scrollHintText {
+  font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  font-size: clamp(10px, 1.05vw, 11px);
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: #141418;
+  text-transform: uppercase;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.scrollHintArrow {
+  width: 13px;
+  height: 13px;
+  stroke: #141418;
+  fill: none;
+  animation: hintPulse 2s infinite ease-in-out;
+}
+
+@keyframes hintPulse {
+  0%, 100% {
+    transform: translateY(0);
+    opacity: 0.65;
+  }
+  50% {
+    transform: translateY(4px);
+    opacity: 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .journeyHeader {
+    top: 16px;
+    right: 16px;
+  }
+
+  .roadAtmosphere {
+    left: 24px;
+    transform: none;
+  }
+
+  .scrollHint {
+    right: 16px;
+    bottom: 20px;
+  }
+
+  .scrollHintText {
+    font-size: 9px;
+    padding: 3px 8px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scrollHintArrow {
+    animation: none !important;
+  }
+}

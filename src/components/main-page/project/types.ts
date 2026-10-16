@@ -25,6 +25,8 @@ export interface ProjectFileHubProps {
   className?: string;
   projects?: ProjectItem[];
   onOpenChange?: (isOpen: boolean) => void;
+  onOpenProjects?: () => void;
+  isNavigating?: boolean;
 }
 
 export interface ConstellationMetrics {

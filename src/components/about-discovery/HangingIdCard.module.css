@@ -21,13 +21,14 @@
   -webkit-backdrop-filter: blur(14px);
   pointer-events: none;
   opacity: 0;
-  transition: opacity 740ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition: opacity 450ms cubic-bezier(0.16, 1, 0.3, 1);
   z-index: 68;
 }
 
 .focusBackdrop.isVisible {
   opacity: 1;
   pointer-events: auto;
+  cursor: pointer;
 }
 
 /* Top-Left Hanging Anchor */
@@ -41,20 +42,174 @@
   -webkit-user-select: none;
 }
 
-/* Positionable & Draggable Card Container */
+/* Positionable Card Container — carries translate + scale (position in viewport) */
 .cardMover {
   position: relative;
   width: 170px;
   height: 250px;
   pointer-events: auto;
+  /* translate + scale live here; pendulum rotation lives on hangingAssembly */
   will-change: transform, opacity;
+  transform-origin: 50% 0%;
   transition: opacity 450ms cubic-bezier(0.16, 1, 0.3, 1);
+  /* Allow hangingConnection to render above cardMover in centered state */
+  overflow: visible;
+}
+
+/*
+ * hangingAssembly — PENDULUM PIVOT wrapper
+ * The entire hanging unit (upper strap + tag + lower strap + clasp + card)
+ * rotates together from the top pivot (at the top of the viewport).
+ * Physics loop writes el.style.transform = rotate(Xdeg) directly.
+ */
+.hangingAssembly {
+  position: relative;
+  width: 170px;
+  height: 250px;
+  /* Default top-center pivot during teaser/drag; updated dynamically to viewport top when centered */
+  transform-origin: 50% 0%;
+  will-change: transform;
+  overflow: visible;
+}
+
+/* In centered state the pivot is dynamically set to 50% -hangLength in JS; fallback provided */
+.hangingAssembly.isCenteredAssembly {
+  transform-origin: 50% -260px;
+}
+
+/* ─── Centered Hanging Connection (Originates from Top of Viewport) ──────── */
+
+/*
+ * Container for the full visual hanging connection:
+ *   upper strap (reaches top of screen) → tag → lower strap → clasp → card
+ * Positioned absolutely above the card top, centered horizontally.
+ * Does NOT affect document flow — card position is unchanged.
+ */
+.hangingConnection {
+  position: absolute;
+  bottom: calc(100% - 8px); /* Clasp aligns with punch hole */
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+  z-index: 10;
+  animation: hangConnectionFadeIn 320ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes hangConnectionFadeIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(-6px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* Long woven strap extending upward past the top edge of the viewport */
+.upperStrap {
+  width: 12px;
+  height: 120vh;
+  min-height: 500px;
+  background: linear-gradient(
+    90deg,
+    #121214 0%,
+    #1c1c20 25%,
+    #28282d 50%,
+    #1c1c20 75%,
+    #121214 100%
+  );
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  border-right: 1px solid rgba(0, 0, 0, 0.45);
+  box-shadow:
+    inset -1px 0 0 rgba(255, 255, 255, 0.08),
+    inset 1px 0 0 rgba(0, 0, 0, 0.5),
+    0 4px 14px rgba(0, 0, 0, 0.35);
+  flex-shrink: 0;
+}
+
+/* Lanyard Middle Fastener / Brand Tag */
+.lanyardTag {
+  width: 36px;
+  height: 19px;
+  background: linear-gradient(145deg, #28282c 0%, #171719 100%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 4px;
+  box-shadow:
+    0 4px 10px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: -1px 0;
+  flex-shrink: 0;
+  z-index: 2;
+}
+
+.lanyardTagText {
+  font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  font-size: 6.5px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: rgba(255, 255, 255, 0.72);
+  text-transform: uppercase;
+}
+
+/* Lower strap segment between tag and clasp */
+.lowerStrap {
+  width: 12px;
+  height: 38px;
+  background: linear-gradient(
+    90deg,
+    #121214 0%,
+    #1c1c20 25%,
+    #28282d 50%,
+    #1c1c20 75%,
+    #121214 100%
+  );
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  border-right: 1px solid rgba(0, 0, 0, 0.45);
+  box-shadow:
+    inset -1px 0 0 rgba(255, 255, 255, 0.08),
+    inset 1px 0 0 rgba(0, 0, 0, 0.5),
+    0 2px 8px rgba(0, 0, 0, 0.35);
+  flex-shrink: 0;
+}
+
+/* Metallic clasp assembly connecting into card punch hole */
+.hangingClasp {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: -1px;
+  flex-shrink: 0;
+  z-index: 3;
+}
+
+.claspRing {
+  width: 10px;
+  height: 8px;
+  border: 1.5px solid #8e8e93;
+  border-radius: 50%;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  background: transparent;
+  flex-shrink: 0;
+}
+
+.claspBody {
+  width: 18px;
+  height: 10px;
+  background: linear-gradient(180deg, #9e9ea3 0%, #58585c 50%, #3a3a3c 100%);
+  border-radius: 2px;
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  margin-top: -2px;
+  flex-shrink: 0;
 }
 
 .hangingCard {
   position: relative;
-  width: 100%;
-  height: 100%;
+  /* Explicit fixed dimensions — matches hangingAssembly bounds */
+  width: 170px;
+  height: 250px;
   background: linear-gradient(175deg, #ffffff 0%, #f7f7f9 100%);
   border-radius: 10px;
   box-shadow:
@@ -64,12 +219,14 @@
   pointer-events: auto;
   cursor: grab;
   touch-action: none;
-  transform-origin: 50% 0%;
+  /* transform-origin is 50% 50% here since all transforms live on cardMover */
+  transform-origin: 50% 50%;
   outline: none;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  transition: box-shadow 740ms cubic-bezier(0.16, 1, 0.3, 1);
+  /* Only box-shadow transitions on this element; transform is on parent cardMover */
+  transition: box-shadow 480ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .hangingCard:focus-visible {
@@ -84,6 +241,19 @@
   cursor: grabbing;
 }
 
+/* Physical Feedback: Taut resistance when reaching the physical pull stop */
+.hangingCard.atPullStop {
+  box-shadow:
+    0 20px 44px rgba(0, 0, 0, 0.18),
+    0 5px 12px rgba(0, 0, 0, 0.08),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.1);
+}
+
+/* NOTE: Cinematic whoosh/rotate/zoom is entirely RAF-driven in HangingIdCard.tsx.
+ * The cardMover carries the unified translate+rotate+scale transform.
+ * No CSS keyframe animation is used for the center reveal.
+ */
+
 /* Enhanced tactile presence and focal depth in centered state */
 .hangingCard.isCenteredCard {
   box-shadow:
@@ -91,35 +261,41 @@
     0 12px 30px rgba(0, 0, 0, 0.24),
     0 2px 6px rgba(0, 0, 0, 0.12),
     inset 0 0 0 1px rgba(255, 255, 255, 0.28);
+  cursor: grab;
 }
 
-/* Physical Lanyard Strap extending offscreen above the viewport */
+/* Physical Lanyard Strap — shown during teaser / drag phases only */
 .strap {
+  /* Absolute: renders above the card top, does not affect flow */
   position: absolute;
-  top: -46px;
+  bottom: 100%;
   left: 50%;
   transform: translateX(-50%);
-  width: 14px;
-  height: 52px;
-  background: #18181b;
+  width: 12px;
+  height: 120px;
+  background: linear-gradient(
+    90deg,
+    #121214 0%,
+    #1c1c20 25%,
+    #28282d 50%,
+    #1c1c20 75%,
+    #121214 100%
+  );
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  border-right: 1px solid rgba(0, 0, 0, 0.45);
   border-radius: 2px 2px 0 0;
   box-shadow:
-    inset -1px 0 0 rgba(255, 255, 255, 0.15),
-    inset 1px 0 0 rgba(0, 0, 0, 0.3),
+    inset -1px 0 0 rgba(255, 255, 255, 0.08),
+    inset 1px 0 0 rgba(0, 0, 0, 0.5),
     0 2px 6px rgba(0, 0, 0, 0.2);
   z-index: 10;
   pointer-events: none;
-  transition: opacity 450ms cubic-bezier(0.16, 1, 0.3, 1) 120ms;
 }
 
-.strap.isCentering {
-  opacity: 0;
-}
-
-/* Metallic clip attached to lanyard and card slot */
+/* Metallic clip — shown during teaser / drag phases only */
 .clasp {
   position: absolute;
-  top: 2px;
+  bottom: calc(100% - 10px); /* overlaps bottom of strap by ~10px */
   left: 50%;
   transform: translateX(-50%);
   width: 18px;
@@ -129,11 +305,6 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
   z-index: 11;
   pointer-events: none;
-  transition: opacity 450ms cubic-bezier(0.16, 1, 0.3, 1) 120ms;
-}
-
-.clasp.isCentering {
-  opacity: 0;
 }
 
 /* Punch hole slot on the ID card */
@@ -273,42 +444,50 @@
 /* Instruction Prompt below the visible teaser */
 .instructionContainer {
   position: absolute;
-  top: calc(100% + 12px);
+  top: calc(100% + 14px);
   left: 50%;
   transform: translateX(-50%);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
+  gap: 4px;
   pointer-events: none;
   white-space: nowrap;
-  transition: opacity 280ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition: opacity 280ms cubic-bezier(0.16, 1, 0.3, 1), transform 280ms cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 20;
 }
 
 .instructionText {
   font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
   font-size: 9.5px;
-  font-weight: 500;
+  font-weight: 700;
   letter-spacing: 0.18em;
-  color: #4b4b4e;
+  color: #18181c;
   text-transform: uppercase;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .instructionArrow {
-  width: 10px;
-  height: 10px;
-  stroke: #4b4b4e;
+  width: 12px;
+  height: 12px;
+  stroke: #18181c;
   fill: none;
-  animation: gentlePulse 2.4s ease-in-out infinite;
+  animation: pullDownPulse 2s ease-in-out infinite;
 }
 
-@keyframes gentlePulse {
+@keyframes pullDownPulse {
   0%, 100% {
     transform: translateY(0);
     opacity: 0.7;
   }
   50% {
-    transform: translateY(3px);
+    transform: translateY(4px);
     opacity: 1;
   }
 }
@@ -316,7 +495,7 @@
 /* KNOW MORE ABOUT ME — Centered Call To Action */
 .ctaContainer {
   position: absolute;
-  top: calc(100% + 22px);
+  top: calc(100% + 50px);
   left: 50%;
   display: flex;
   flex-direction: column;
@@ -384,6 +563,37 @@
     height: 215px;
   }
 
+  .hangingCard {
+    width: 142px;
+    height: 215px;
+  }
+
+  /* hangingAssembly matches card dimensions on mobile */
+  .hangingAssembly {
+    width: 142px;
+    height: 215px;
+  }
+
+  .upperStrap,
+  .lowerStrap,
+  .strap {
+    width: 10px;
+  }
+
+  .lanyardTag {
+    width: 30px;
+    height: 16px;
+  }
+
+  .lanyardTagText {
+    font-size: 5.5px;
+  }
+
+  .hangingClasp .claspBody {
+    width: 15px;
+    height: 8px;
+  }
+
   .photoPlaceholder {
     height: 76px;
   }
@@ -398,6 +608,10 @@
 
   .instructionText {
     font-size: 8.5px;
+  }
+
+  .ctaContainer {
+    top: calc(100% + 36px);
   }
 
   .ctaButton {
@@ -417,6 +631,19 @@
   }
   .cardMover {
     transition-duration: 0.01ms !important;
+  }
+  .hangingAssembly {
+    transition: none !important;
+    animation: none !important;
+  }
+  .hangingConnection {
+    animation: none !important;
+  }
+  .hangingCard {
+    transition-duration: 0.01ms !important;
+  }
+  .hangingCard.cinematicCentering {
+    animation: none !important;
   }
   .ctaContainer {
     transition-duration: 0.01ms !important;

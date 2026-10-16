@@ -1,25 +1,39 @@
 import React from "react";
 import styles from "./layers.module.css";
 import { CentralHero } from "../hero";
-import { PortraitFrameSequence } from "../portrait";
-import { AboutSection } from "../about";
+import { AboutPage } from "../../about";
+import { ProjectsPage } from "../../projects";
 
 export interface HeroLayerProps {
   isHomeVisible?: boolean;
   isAboutActive?: boolean;
+  isProjectsActive?: boolean;
+  isTransitioningToAbout?: boolean;
+  isTransitioningToHome?: boolean;
+  isTransitioningToProjects?: boolean;
+  isTransitioningFromProjects?: boolean;
   currentFrame?: number;
   exitProgress?: number;
+  onReturnHome?: () => void;
+  onReturnHomeFromProjects?: () => void;
   children?: React.ReactNode;
 }
 
 /**
- * HeroLayer — Structural layer for Central Home (ANSHAD), Portrait Frame Sequence, and About Section
+ * HeroLayer — Phase 03.1 / Phase 08
+ * Structural layer for Central Home (ANSHAD), Split-Screen AboutPage, and White ProjectsPage
  */
 export const HeroLayer: React.FC<HeroLayerProps> = ({
   isHomeVisible = false,
   isAboutActive = false,
+  isProjectsActive = false,
+  isTransitioningToAbout = false,
+  isTransitioningToHome = false,
+  isTransitioningToProjects = false,
+  isTransitioningFromProjects = false,
   currentFrame = 1,
-  exitProgress = 0,
+  onReturnHome,
+  onReturnHomeFromProjects,
   children,
 }) => {
   return (
@@ -27,31 +41,60 @@ export const HeroLayer: React.FC<HeroLayerProps> = ({
       className={`${styles.layerBase} ${styles.heroLayer}`}
       data-layer="hero"
     >
-      <div className={styles.heroAnchor} data-anchor="hero">
-        {children || (
-          <>
-            {/* 1. Central Home visual: ANSHAD in Akira Expanded Demo */}
-            <CentralHero isHomeVisible={isHomeVisible} />
-
-            {/* 2. Cinematic Portrait Sequence (belongs to ABOUT transition) */}
+      {children || (
+        <>
+          {/* 1. Central Home visual: ANSHAD in Akira Expanded Demo with coordinated fade */}
+          {isHomeVisible && (
             <div
-              className={styles.aboutPortraitWrapper}
+              className={styles.homeFadeWrapper}
               style={{
-                opacity: isAboutActive ? 1 : 0,
-                pointerEvents: "none",
-                visibility: isAboutActive ? "visible" : "hidden",
-                transition:
-                  "opacity 450ms cubic-bezier(0.16, 1, 0.3, 1), visibility 450ms",
+                opacity:
+                  isTransitioningToAbout || isTransitioningToProjects ? 0 : 1,
+                transform:
+                  isTransitioningToAbout || isTransitioningToProjects
+                    ? "scale(0.97)"
+                    : "scale(1)",
+                pointerEvents:
+                  isAboutActive ||
+                  isTransitioningToAbout ||
+                  isProjectsActive ||
+                  isTransitioningToProjects
+                    ? "none"
+                    : "auto",
+              }}
+              data-anchor="hero"
+            >
+              <CentralHero isHomeVisible={true} />
+            </div>
+          )}
+
+          {/* 2. Full-Viewport Split About Experience with coordinated fade */}
+          {isAboutActive && (
+            <div
+              className={styles.aboutFadeWrapper}
+              style={{
+                opacity: isTransitioningToHome ? 0 : 1,
+                pointerEvents: isTransitioningToHome ? "none" : "auto",
               }}
             >
-              <PortraitFrameSequence currentFrame={currentFrame} />
+              <AboutPage currentFrame={currentFrame} onReturnHome={onReturnHome} />
             </div>
+          )}
 
-            {/* 3. Editorial About Me section */}
-            <AboutSection exitProgress={exitProgress} />
-          </>
-        )}
-      </div>
+          {/* 3. Full-Viewport Projects Experience with coordinated fade */}
+          {isProjectsActive && (
+            <div
+              className={styles.projectsFadeWrapper}
+              style={{
+                opacity: isTransitioningFromProjects ? 0 : 1,
+                pointerEvents: isTransitioningFromProjects ? "none" : "auto",
+              }}
+            >
+              <ProjectsPage onReturnHome={onReturnHomeFromProjects || onReturnHome} />
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 };
