@@ -65,6 +65,9 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
           className={styles.cardContainer}
           tabIndex={isOpen ? 0 : -1}
           aria-label={`${project.title} — ${project.category || "Project details"} (opens in new tab)`}
+          onClick={(e) => {
+            e.stopPropagation();
+          }}
         >
           {cardInner}
         </a>
@@ -74,6 +77,9 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
           role="article"
           tabIndex={isOpen ? 0 : -1}
           aria-label={`${project.title} — ${project.category || "Project details"}`}
+          onClick={(e) => {
+            e.stopPropagation();
+          }}
         >
           {cardInner}
         </div>

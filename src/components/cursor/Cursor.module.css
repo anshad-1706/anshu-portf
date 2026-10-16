@@ -8,7 +8,7 @@
   height: 22px;
   pointer-events: none !important;
   user-select: none;
-  z-index: var(--z-cursor, 100);
+  z-index: 100000;
   will-change: transform, opacity;
   transform: translate3d(-100px, -100px, 0);
   opacity: 0;

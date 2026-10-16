@@ -1,0 +1,92 @@
+/* AboutPage — Phase 03.1 Split-Screen Identity + Journey Road */
+
+.aboutPageContainer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  display: grid;
+  grid-template-columns: minmax(360px, 45%) 1fr;
+  background-color: transparent;
+  overflow: hidden;
+  z-index: 20;
+  pointer-events: auto;
+}
+
+/* Left Side: Fixed Identity Panel */
+.leftIdentityWorld {
+  position: relative;
+  height: 100%;
+  overflow: visible;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  pointer-events: auto;
+}
+
+/* Right Side: Moving Journey World */
+.rightJourneyWorld {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: auto;
+  touch-action: pan-y;
+}
+
+/* The editorial canvas has a separate bottom-right ambient mass beneath this
+   panel. This wash keeps that mass from becoming a dark floor in the journey
+   composition, while leaving the road itself above the wash. */
+.rightJourneyWorld::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    transparent 30%,
+    rgba(255, 255, 255, 0.04) 43%,
+    rgba(255, 255, 255, 0.24) 57%,
+    rgba(255, 255, 255, 0.66) 74%,
+    #ffffff 100%
+  );
+}
+
+.rightJourneyWorld > :last-child {
+  position: relative;
+  z-index: 3;
+}
+
+
+
+/* Responsive for Tablet / Mobile */
+@media (max-width: 1024px) {
+  .aboutPageContainer {
+    grid-template-columns: 44% 56%;
+  }
+}
+
+@media (max-width: 768px) {
+  .aboutPageContainer {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    overflow-x: hidden;
+    height: 100vh;
+    height: 100dvh;
+  }
+
+  .leftIdentityWorld {
+    height: auto;
+    flex-shrink: 0;
+  }
+
+  .rightJourneyWorld {
+    min-height: 540px;
+    flex: 1;
+  }
+
+
+}

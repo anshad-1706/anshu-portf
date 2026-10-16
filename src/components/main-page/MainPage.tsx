@@ -33,7 +33,10 @@ type SequenceState =
   | "forming_about"
   | "about_held"
   | "about_exiting"
-  | "about_complete";
+  | "about_complete"
+  | "transitioning_to_projects"
+  | "projects_active"
+  | "transitioning_from_projects";
 
 /**
  * MainPage — Phase 07.5 Architectural Correction: Unified First-Scroll Home Reveal
@@ -66,9 +69,32 @@ export const MainPage: React.FC<MainPageProps> = ({
     return false;
   });
   const [isAboutActive, setIsAboutActive] = useState<boolean>(false);
+  const [isProjectsActive, setIsProjectsActive] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      return (
+        window.location.hash === "#work" || window.location.hash === "#projects"
+      );
+    }
+    return false;
+  });
+  const [isTransitioningToAbout, setIsTransitioningToAbout] = useState<boolean>(false);
+  const [isTransitioningToHome, setIsTransitioningToHome] = useState<boolean>(false);
+  const [isTransitioningToProjects, setIsTransitioningToProjects] = useState<boolean>(false);
+  const [isTransitioningFromProjects, setIsTransitioningFromProjects] = useState<boolean>(false);
   const [currentFrame, setCurrentFrame] = useState<number>(1);
   const [exitProgress, setExitProgress] = useState<number>(0);
-  const [activeNavId, setActiveNavId] = useState<string>("home");
+  const [activeNavId, setActiveNavId] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      if (
+        window.location.hash === "#work" ||
+        window.location.hash === "#projects"
+      ) {
+        return "work";
+      }
+      if (window.location.hash === "#about") return "about";
+    }
+    return "home";
+  });
   const [isProjectHubOpen, setIsProjectHubOpen] = useState<boolean>(false);
   const [isHomeStable, setIsHomeStable] = useState<boolean>(() => {
     if (typeof window !== "undefined") {
@@ -80,10 +106,25 @@ export const MainPage: React.FC<MainPageProps> = ({
   const [forceIdCardTeaser, setForceIdCardTeaser] = useState<boolean>(false);
 
   // State refs to ensure atomic gesture handling without stale closures
+  const hasCompletedDiscoveryRef = useRef<boolean>(
+    (() => {
+      if (typeof window !== "undefined") {
+        const params = new URLSearchParams(window.location.search);
+        return params.has("skipIntro") || window.location.hash === "#about";
+      }
+      return false;
+    })()
+  );
   const stateRef = useRef<SequenceState>(
     (() => {
       if (typeof window !== "undefined") {
         const params = new URLSearchParams(window.location.search);
+        if (
+          window.location.hash === "#work" ||
+          window.location.hash === "#projects"
+        ) {
+          return "projects_active";
+        }
         if (params.has("skipIntro") || window.location.hash === "#home") return "home";
       }
       return isIntroCompleted ? "waiting_for_home" : "intro";
@@ -95,6 +136,7 @@ export const MainPage: React.FC<MainPageProps> = ({
   const formationRafRef = useRef<number | null>(null);
   const exitRafRef = useRef<number | null>(null);
   const homeEnteringTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const transitionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const shouldReduceMotion = useReducedMotion() ?? false;
 
   // Sync introCompleted state changes from App.tsx
@@ -138,16 +180,21 @@ export const MainPage: React.FC<MainPageProps> = ({
     }, 950);
   }, [onHomeActiveChange, shouldReduceMotion]);
 
-  // 2. Start About portrait formation animation (frames 01 -> 76)
-  // Preserved for Phase 02/03 when ID card fully reveals About
+  // 2. Coordinated Home-to-About Transition (FIX 03 & FIX 04)
   const startAboutFormation = useCallback(() => {
-    if (stateRef.current !== "home") return;
-    stateRef.current = "forming_about";
+    // Prevent repeated activation while transition is running
+    if (
+      stateRef.current === "forming_about" ||
+      stateRef.current === "about_held" ||
+      stateRef.current === "about_exiting"
+    ) {
+      return;
+    }
 
-    // ANSHAD fades out, portrait sequence appears
-    setIsHomeVisible(false);
-    setIsAboutActive(true);
+    stateRef.current = "forming_about";
+    setIsTransitioningToAbout(true);
     setIsHomeStable(false);
+    hasCompletedDiscoveryRef.current = true;
     setActiveNavId("about");
 
     // Start preloading formation batch
@@ -156,13 +203,23 @@ export const MainPage: React.FC<MainPageProps> = ({
     if (shouldReduceMotion) {
       frameRef.current = FORMATION_END_FRAME;
       setCurrentFrame(FORMATION_END_FRAME);
+      setIsAboutActive(true);
+      setIsHomeVisible(false);
+      setIsTransitioningToAbout(false);
       stateRef.current = "about_held";
       portraitPreloader.loadExitBatch();
       return;
     }
 
+    // Coordinated sequence: Outgoing Home scene begins fading immediately.
+    // Mount AboutPage at 350ms so it smoothly crossfades in while the portrait forms.
+    if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
+    transitionTimerRef.current = setTimeout(() => {
+      setIsAboutActive(true);
+    }, 350);
+
     const startTime = performance.now();
-    const DURATION_MS = 2600; // ~2.6 seconds cinematic particle formation
+    const DURATION_MS = 2400; // ~2.4 seconds smooth particle formation
 
     const tick = (now: number) => {
       const elapsed = now - startTime;
@@ -181,6 +238,8 @@ export const MainPage: React.FC<MainPageProps> = ({
         frameRef.current = FORMATION_END_FRAME;
         setCurrentFrame(FORMATION_END_FRAME);
         stateRef.current = "about_held";
+        setIsHomeVisible(false);
+        setIsTransitioningToAbout(false);
         formationRafRef.current = null;
         portraitPreloader.loadExitBatch();
       }
@@ -188,8 +247,7 @@ export const MainPage: React.FC<MainPageProps> = ({
 
     formationRafRef.current = requestAnimationFrame(tick);
   }, [shouldReduceMotion]);
-
-  // 3. Return from About back to Home
+  // 3. Return from About back to Home (instant reset)
   const returnToHome = useCallback(() => {
     if (formationRafRef.current) {
       cancelAnimationFrame(formationRafRef.current);
@@ -203,6 +261,10 @@ export const MainPage: React.FC<MainPageProps> = ({
       clearTimeout(homeEnteringTimerRef.current);
       homeEnteringTimerRef.current = null;
     }
+    if (transitionTimerRef.current) {
+      clearTimeout(transitionTimerRef.current);
+      transitionTimerRef.current = null;
+    }
 
     targetProgressRef.current = 0;
     currentProgressRef.current = 0;
@@ -210,6 +272,8 @@ export const MainPage: React.FC<MainPageProps> = ({
     frameRef.current = 1;
     setCurrentFrame(1);
 
+    setIsTransitioningToAbout(false);
+    setIsTransitioningToHome(false);
     setIsAboutActive(false);
     setIsHomeVisible(true);
     setIsHomeStable(true);
@@ -217,6 +281,90 @@ export const MainPage: React.FC<MainPageProps> = ({
     onHomeActiveChange?.(true);
     stateRef.current = "home";
   }, [onHomeActiveChange]);
+
+  // 4. Return from About back to Home with cinematic portrait dissolution (frames 77 -> 130) (FIX 03 & FIX 04)
+  const handleReturnHomeFromAbout = useCallback(() => {
+    // Prevent double triggering
+    if (
+      stateRef.current === "about_exiting" ||
+      stateRef.current === "home_entering" ||
+      stateRef.current === "home"
+    ) {
+      return;
+    }
+
+    stateRef.current = "about_exiting";
+    setIsTransitioningToHome(true);
+    setActiveNavId("home");
+
+    if (formationRafRef.current) {
+      cancelAnimationFrame(formationRafRef.current);
+      formationRafRef.current = null;
+    }
+    if (exitRafRef.current) {
+      cancelAnimationFrame(exitRafRef.current);
+      exitRafRef.current = null;
+    }
+
+    if (shouldReduceMotion) {
+      frameRef.current = 1;
+      setCurrentFrame(1);
+      setExitProgress(0);
+      setIsAboutActive(false);
+      setIsHomeVisible(true);
+      setIsHomeStable(true);
+      setIsTransitioningToHome(false);
+      onHomeActiveChange?.(true);
+      stateRef.current = "home";
+      return;
+    }
+
+    // Preload exit batch 77 -> 130
+    portraitPreloader.loadExitBatch();
+
+    // At 400ms, start fading Home back in so it seamlessly materializes under dissolution
+    if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
+    transitionTimerRef.current = setTimeout(() => {
+      setIsHomeVisible(true);
+    }, 400);
+
+    const startTime = performance.now();
+    const DURATION_MS = 1800; // ~1.8 seconds smooth particle dissolution
+
+    const tick = (now: number) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(1, elapsed / DURATION_MS);
+      const nextFrame = Math.min(
+        EXIT_END_FRAME,
+        Math.max(
+          EXIT_START_FRAME,
+          Math.round(EXIT_START_FRAME + progress * (EXIT_END_FRAME - EXIT_START_FRAME))
+        )
+      );
+
+      frameRef.current = nextFrame;
+      setCurrentFrame(nextFrame);
+      setExitProgress(progress);
+
+      if (progress < 1) {
+        exitRafRef.current = requestAnimationFrame(tick);
+      } else {
+        exitRafRef.current = null;
+        // Dissolution completed: seamlessly hand off to Home
+        frameRef.current = 1;
+        setCurrentFrame(1);
+        setExitProgress(0);
+        setIsAboutActive(false);
+        setIsHomeVisible(true);
+        setIsHomeStable(true);
+        setIsTransitioningToHome(false);
+        onHomeActiveChange?.(true);
+        stateRef.current = "home";
+      }
+    };
+
+    exitRafRef.current = requestAnimationFrame(tick);
+  }, [onHomeActiveChange, shouldReduceMotion]);
 
   // 4. Smooth exit progress interpolation loop for frames 77 -> 130
   const startExitLoop = useCallback(() => {
@@ -297,6 +445,98 @@ export const MainPage: React.FC<MainPageProps> = ({
     exitRafRef.current = requestAnimationFrame(tick);
   }, []);
 
+  // 5. Open Projects page via smooth cinematic fade transition
+  const handleProjectsRequested = useCallback(() => {
+    // Prevent double activation
+    if (
+      stateRef.current === "transitioning_to_projects" ||
+      stateRef.current === "projects_active" ||
+      stateRef.current === "forming_about" ||
+      stateRef.current === "about_held" ||
+      stateRef.current === "about_exiting" ||
+      stateRef.current === "transitioning_from_projects"
+    ) {
+      return;
+    }
+
+    stateRef.current = "transitioning_to_projects";
+    setIsTransitioningToProjects(true);
+    setActiveNavId("work");
+
+    if (shouldReduceMotion) {
+      setIsHomeVisible(false);
+      setIsProjectsActive(true);
+      setIsTransitioningToProjects(false);
+      stateRef.current = "projects_active";
+      if (typeof window !== "undefined") {
+        window.history.replaceState(null, "", "#work");
+      }
+      return;
+    }
+
+    // Coordinated sequence:
+    // Outgoing Home scene begins smooth fade out.
+    // Mount ProjectsPage at 240ms so it smoothly crossfades in.
+    if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
+    transitionTimerRef.current = setTimeout(() => {
+      setIsProjectsActive(true);
+      if (typeof window !== "undefined") {
+        window.history.replaceState(null, "", "#work");
+      }
+    }, 240);
+
+    setTimeout(() => {
+      setIsHomeVisible(false);
+      setIsTransitioningToProjects(false);
+      stateRef.current = "projects_active";
+    }, 550);
+  }, [shouldReduceMotion]);
+
+  // 6. Return from Projects back to Home with smooth crossfade
+  const handleReturnHomeFromProjects = useCallback(() => {
+    if (
+      stateRef.current === "transitioning_from_projects" ||
+      stateRef.current === "home_entering" ||
+      stateRef.current === "home"
+    ) {
+      return;
+    }
+
+    stateRef.current = "transitioning_from_projects";
+    setIsTransitioningFromProjects(true);
+    setActiveNavId("home");
+
+    if (shouldReduceMotion) {
+      setIsProjectsActive(false);
+      setIsHomeVisible(true);
+      setIsHomeStable(true);
+      setIsTransitioningFromProjects(false);
+      onHomeActiveChange?.(true);
+      stateRef.current = "home";
+      if (typeof window !== "undefined") {
+        window.history.replaceState(null, "", "#home");
+      }
+      return;
+    }
+
+    // Fade Home back in at 150ms while Projects page fades out
+    if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current);
+    transitionTimerRef.current = setTimeout(() => {
+      setIsHomeVisible(true);
+    }, 150);
+
+    setTimeout(() => {
+      setIsProjectsActive(false);
+      setIsHomeStable(true);
+      setIsTransitioningFromProjects(false);
+      onHomeActiveChange?.(true);
+      stateRef.current = "home";
+      if (typeof window !== "undefined") {
+        window.history.replaceState(null, "", "#home");
+      }
+    }, 450);
+  }, [onHomeActiveChange, shouldReduceMotion]);
+
   // Event Listeners: ONLY active once Intro is completed
   useEffect(() => {
     if (!isIntroCompleted) return;
@@ -321,7 +561,21 @@ export const MainPage: React.FC<MainPageProps> = ({
         return;
       }
 
-      // 3. In HOME (HOME_STABLE):
+      // 3. In PROJECTS_ACTIVE: normal scroll permitted
+      if (currentState === "projects_active") {
+        return;
+      }
+
+      // 4. In transition to/from projects: lock input
+      if (
+        currentState === "transitioning_to_projects" ||
+        currentState === "transitioning_from_projects"
+      ) {
+        e.preventDefault();
+        return;
+      }
+
+      // 5. In HOME (HOME_STABLE):
       if (currentState === "home") {
         if (e.deltaY < 0) {
           // At top of Home, prevent scrolling above/replaying intro
@@ -333,49 +587,16 @@ export const MainPage: React.FC<MainPageProps> = ({
         return;
       }
 
-      // 4. In FORMING_ABOUT: input locked during automatic 01 -> 76 formation
+      // 6. In FORMING_ABOUT: input locked during automatic 01 -> 76 formation
       if (currentState === "forming_about") {
         e.preventDefault();
         return;
       }
 
-      // 5. In ABOUT_HELD:
-      if (currentState === "about_held") {
-        if (e.deltaY < -15) {
-          // Scrolling up from frame 76 returns cleanly to HOME
-          e.preventDefault();
-          returnToHome();
-          return;
-        }
-        if (e.deltaY > 0) {
-          // Scrolling down begins exit progress 77 -> 130
-          e.preventDefault();
-          targetProgressRef.current = Math.min(
-            1,
-            targetProgressRef.current + e.deltaY / 750
-          );
-          startExitLoop();
-        }
+      // 7. In ABOUT_HELD / JOURNEY_ACTIVE: Portrait frame 76 is held; journey road handles scroll
+      if (currentState === "about_held" || currentState === "about_complete") {
+        // Handled directly inside AboutPage JourneyRoad scroll listener
         return;
-      }
-
-      // 6. In ABOUT_EXITING or ABOUT_COMPLETE:
-      if (currentState === "about_exiting" || currentState === "about_complete") {
-        e.preventDefault();
-        const deltaNormalized = e.deltaY / 750;
-        const newTarget = Math.max(
-          0,
-          Math.min(1, targetProgressRef.current + deltaNormalized)
-        );
-
-        // If reversing up reaches 0, return to about_held or home
-        if (newTarget === 0 && targetProgressRef.current === 0 && e.deltaY < -15) {
-          returnToHome();
-          return;
-        }
-
-        targetProgressRef.current = newTarget;
-        startExitLoop();
       }
     };
 
@@ -405,6 +626,18 @@ export const MainPage: React.FC<MainPageProps> = ({
         return;
       }
 
+      if (currentState === "projects_active") {
+        return;
+      }
+
+      if (
+        currentState === "transitioning_to_projects" ||
+        currentState === "transitioning_from_projects"
+      ) {
+        if (e.cancelable) e.preventDefault();
+        return;
+      }
+
       if (currentState === "home") {
         if (deltaY < -5) {
           if (e.cancelable) e.preventDefault();
@@ -419,41 +652,9 @@ export const MainPage: React.FC<MainPageProps> = ({
         return;
       }
 
-      if (currentState === "about_held") {
-        if (deltaY < -20) {
-          if (e.cancelable) e.preventDefault();
-          returnToHome();
-          return;
-        }
-        if (deltaY > 2) {
-          if (e.cancelable) e.preventDefault();
-          targetProgressRef.current = Math.min(
-            1,
-            targetProgressRef.current + deltaY / 550
-          );
-          touchStartY = currentY;
-          startExitLoop();
-        }
+      if (currentState === "about_held" || currentState === "about_complete") {
+        // Handled directly inside AboutPage JourneyRoad touch listener
         return;
-      }
-
-      if (currentState === "about_exiting" || currentState === "about_complete") {
-        if (Math.abs(deltaY) > 2) {
-          if (e.cancelable) e.preventDefault();
-          const newTarget = Math.max(
-            0,
-            Math.min(1, targetProgressRef.current + deltaY / 550)
-          );
-
-          if (newTarget === 0 && targetProgressRef.current === 0 && deltaY < -20) {
-            returnToHome();
-            return;
-          }
-
-          targetProgressRef.current = newTarget;
-          touchStartY = currentY;
-          startExitLoop();
-        }
       }
     };
 
@@ -496,15 +697,78 @@ export const MainPage: React.FC<MainPageProps> = ({
   // Handle direct navigation selection (clicking Home, Work, About in navbar)
   const handleNavSelect = useCallback(
     (id: string) => {
-      if (id === "home" || id === "work") {
-        returnToHome();
+      // Intro running: no navigation
+      if (stateRef.current === "intro" || stateRef.current === "waiting_for_home") {
+        return;
+      }
+
+      // Active transition running: ignore duplicate activation
+      if (
+        stateRef.current === "forming_about" ||
+        stateRef.current === "about_exiting" ||
+        stateRef.current === "home_entering" ||
+        stateRef.current === "transitioning_to_projects" ||
+        stateRef.current === "transitioning_from_projects"
+      ) {
+        return;
+      }
+
+      if (id === "home") {
+        if (stateRef.current === "about_held" || isAboutActive) {
+          handleReturnHomeFromAbout();
+        } else if (stateRef.current === "projects_active" || isProjectsActive) {
+          handleReturnHomeFromProjects();
+        } else {
+          setActiveNavId("home");
+        }
+      } else if (id === "work") {
+        if (stateRef.current === "projects_active" || isProjectsActive) {
+          return;
+        }
+        if (stateRef.current === "about_held" || isAboutActive) {
+          handleReturnHomeFromAbout();
+          setTimeout(() => {
+            handleProjectsRequested();
+          }, 300);
+        } else {
+          handleProjectsRequested();
+        }
       } else if (id === "about") {
-        // ABOUT in FloatingNav routes to the ID card discovery teaser / centering
-        setForceIdCardTeaser(true);
+        if (isAboutActive || stateRef.current === "about_held") {
+          return;
+        }
+
+        if (stateRef.current === "projects_active" || isProjectsActive) {
+          handleReturnHomeFromProjects();
+          setTimeout(() => {
+            startAboutFormation();
+          }, 450);
+          return;
+        }
+
+        // Initial Home discovery: click About in navbar does NOT bypass discovery
+        if (!hasCompletedDiscoveryRef.current) {
+          setForceIdCardTeaser(true);
+          return;
+        }
+
+        // Home after first discovery: click About in navbar opens About directly via coordinated transition!
+        startAboutFormation();
       }
     },
-    [returnToHome]
+    [
+      handleReturnHomeFromAbout,
+      handleReturnHomeFromProjects,
+      handleProjectsRequested,
+      startAboutFormation,
+      isAboutActive,
+      isProjectsActive,
+    ]
   );
+
+  const handleDiscoveryDismissed = useCallback(() => {
+    setIsHomeStable(true);
+  }, []);
 
   return (
     <section
@@ -521,13 +785,36 @@ export const MainPage: React.FC<MainPageProps> = ({
       <HeroLayer
         isHomeVisible={isHomeVisible}
         isAboutActive={isAboutActive}
+        isProjectsActive={isProjectsActive}
+        isTransitioningToAbout={isTransitioningToAbout}
+        isTransitioningToHome={isTransitioningToHome}
+        isTransitioningToProjects={isTransitioningToProjects}
+        isTransitioningFromProjects={isTransitioningFromProjects}
         currentFrame={currentFrame}
         exitProgress={exitProgress}
+        onReturnHome={handleReturnHomeFromAbout}
+        onReturnHomeFromProjects={handleReturnHomeFromProjects}
       />
 
       {/* 4. Supporting Micro-Information: Status (bottom-left) & Scroll Hint (bottom-center) (z-index: 25) */}
-      <HomeStatusIndicator isVisible={isHomeVisible && !isAboutActive} />
-      <HomeScrollIndicator isVisible={isHomeVisible && !isAboutActive} />
+      <HomeStatusIndicator
+        isVisible={
+          isHomeVisible &&
+          !isAboutActive &&
+          !isTransitioningToAbout &&
+          !isProjectsActive &&
+          !isTransitioningToProjects
+        }
+      />
+      <HomeScrollIndicator
+        isVisible={
+          isHomeVisible &&
+          !isAboutActive &&
+          !isTransitioningToAbout &&
+          !isProjectsActive &&
+          !isTransitioningToProjects
+        }
+      />
 
       {/* 5. Navigation Layer — Top-Left Brand & Top-Center Nav (z-index: 40) */}
       <NavigationLayer
@@ -537,20 +824,40 @@ export const MainPage: React.FC<MainPageProps> = ({
       />
 
       {/* 6. Focus Blur Layer — Background blur behind centered ProjectFileHub (z-index: 45) */}
-      <FocusBlurLayer isBlurred={isProjectHubOpen} />
+      <FocusBlurLayer
+        isBlurred={
+          isProjectHubOpen && !isProjectsActive && !isTransitioningToProjects
+        }
+      />
 
       {/* 7. Project Layer — Optical Center Project File Hub (z-index: 60) */}
       <ProjectLayer
-        isHomeVisible={isHomeVisible}
+        isHomeVisible={
+          isHomeVisible &&
+          !isTransitioningToAbout &&
+          !isProjectsActive &&
+          !isTransitioningToProjects
+        }
         onOpenChange={setIsProjectHubOpen}
+        onOpenProjects={handleProjectsRequested}
+        isNavigating={isTransitioningToProjects}
       />
 
       {/* 8. About Discovery Layer — Hanging ID Card Pull-Down Entry (z-index: 70) */}
       <AboutDiscoveryLayer
-        isHomeStable={isHomeStable}
-        isAboutActive={isAboutActive}
+        isHomeStable={
+          isHomeStable && !isProjectsActive && !isTransitioningToProjects
+        }
+        isAboutActive={
+          isAboutActive ||
+          isTransitioningToAbout ||
+          isTransitioningToHome ||
+          isProjectsActive ||
+          isTransitioningToProjects
+        }
         forceTrigger={forceIdCardTeaser}
         onAboutRequested={handleAboutRequested}
+        onDismiss={handleDiscoveryDismissed}
       />
 
       {/* 9. Cursor Layer (z-index: 100) */}

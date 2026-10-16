@@ -19,6 +19,8 @@ export const ProjectFileHub: React.FC<ProjectFileHubProps> = ({
   className = "",
   projects = DEFAULT_PROJECT_ITEMS,
   onOpenChange,
+  onOpenProjects,
+  isNavigating = false,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -76,9 +78,15 @@ export const ProjectFileHub: React.FC<ProjectFileHubProps> = ({
     }, 180);
   };
 
-  // Touch tap toggle on file button
+  // Touch tap toggle on file button / folder entry click
+  // - If open (desktop hovered or previously tapped on mobile): navigate to Projects page!
+  // - If closed (initial tap on mobile): open folder to reveal featured cards & CLICK ME
   const handleFileClick = () => {
-    setIsOpen((prev) => !prev);
+    if (isOpen) {
+      onOpenProjects?.();
+    } else {
+      setIsOpen(true);
+    }
   };
 
   // Keyboard accessibility
@@ -100,6 +108,11 @@ export const ProjectFileHub: React.FC<ProjectFileHubProps> = ({
     if (event.key === "Escape") {
       setIsOpen(false);
       fileRef.current?.focus();
+    } else if (event.key === "Enter" || event.key === " ") {
+      if (isOpen) {
+        event.preventDefault();
+        onOpenProjects?.();
+      }
     }
   };
 
@@ -135,6 +148,7 @@ export const ProjectFileHub: React.FC<ProjectFileHubProps> = ({
         isOpen={isOpen}
         onClick={handleFileClick}
         shouldReduceMotion={shouldReduceMotion}
+        isNavigating={isNavigating}
       >
         <div className={styles.projectStage} aria-live="polite">
           {activeProjects.map((project, index) => (
@@ -154,9 +168,23 @@ export const ProjectFileHub: React.FC<ProjectFileHubProps> = ({
         className={`${styles.exploreHint} ${
           isOpen ? styles.exploreHintHidden : styles.exploreHintVisible
         }`}
-        aria-hidden="true"
+        aria-hidden={isOpen}
       >
         EXPLORE PROJECTS
+      </span>
+
+      {/* Primary Interaction Instruction: CLICK ME directly below open file */}
+      <span
+        className={`${styles.clickMeInstruction} ${
+          isOpen ? styles.clickMeVisible : styles.clickMeHidden
+        }`}
+        aria-hidden={!isOpen}
+        onClick={(e) => {
+          e.stopPropagation();
+          onOpenProjects?.();
+        }}
+      >
+        CLICK ME
       </span>
     </div>
   );

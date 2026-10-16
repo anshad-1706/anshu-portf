@@ -2,6 +2,7 @@
 
 .fileVisualContainer {
   position: relative;
+  z-index: 10;
   width: 106px;
   height: 76px;
   display: flex;
@@ -24,6 +25,19 @@
   outline: 2px solid #000000;
   outline-offset: 5px;
   border-radius: 15px;
+}
+
+/* Subtle physical press response */
+.fileVisualContainer:active {
+  transform: scale(0.96);
+  transition: transform 120ms ease;
+}
+
+/* Intentional visual response when navigation transition starts */
+.fileVisualContainer.isNavigating {
+  transform: scale(0.95);
+  opacity: 0.85;
+  transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1), opacity 220ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* 1. Floor Drop Shadow: soft realistic shadow beneath the physical file */

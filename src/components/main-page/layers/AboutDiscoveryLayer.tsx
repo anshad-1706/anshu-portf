@@ -11,6 +11,7 @@ export const AboutDiscoveryLayer: React.FC<AboutDiscoveryLayerProps> = ({
   isAboutActive,
   forceTrigger,
   onAboutRequested,
+  onDismiss,
   className = "",
 }) => {
   return (
@@ -23,6 +24,7 @@ export const AboutDiscoveryLayer: React.FC<AboutDiscoveryLayerProps> = ({
         isAboutActive={isAboutActive}
         forceTrigger={forceTrigger}
         onAboutRequested={onAboutRequested}
+        onDismiss={onDismiss}
       />
     </div>
   );

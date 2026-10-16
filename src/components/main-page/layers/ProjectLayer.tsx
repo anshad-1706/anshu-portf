@@ -8,6 +8,8 @@ export interface ProjectLayerProps {
   className?: string;
   isHomeVisible?: boolean;
   onOpenChange?: (isOpen: boolean) => void;
+  onOpenProjects?: () => void;
+  isNavigating?: boolean;
 }
 
 /**
@@ -21,6 +23,8 @@ export const ProjectLayer: React.FC<ProjectLayerProps> = ({
   className = "",
   isHomeVisible = true,
   onOpenChange,
+  onOpenProjects,
+  isNavigating,
 }) => {
   const shouldReduceMotion = useReducedMotion() ?? false;
 
@@ -43,7 +47,13 @@ export const ProjectLayer: React.FC<ProjectLayerProps> = ({
         data-anchor="project"
         style={{ pointerEvents: isHomeVisible ? "auto" : "none" }}
       >
-        {children || <ProjectFileHub onOpenChange={onOpenChange} />}
+        {children || (
+          <ProjectFileHub
+            onOpenChange={onOpenChange}
+            onOpenProjects={onOpenProjects}
+            isNavigating={isNavigating}
+          />
+        )}
       </div>
     </div>
   );
